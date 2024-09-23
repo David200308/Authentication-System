@@ -1,0 +1,12 @@
+version: "3"
+services:
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: ".env"
+    
+    # If OS is Liunx & the Database own hosted, add this
+    # extra_hosts:
+    #   - "host.docker.internal:172.17.0.1"
+    
