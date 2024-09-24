@@ -3,13 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
 interface SignupData {
-  name: string;
+  username: string;
   email: string;
   password: string;
 }
 
 async function signupUser(data: SignupData): Promise<void> {
-  const response = await fetch("/api/signup", {
+  const response = await fetch("/user/register", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +26,7 @@ async function signupUser(data: SignupData): Promise<void> {
 
 export default function Signup() {
   const [formData, setFormData] = useState<SignupData>({
-    name: "",
+    username: "",
     email: "",
     password: "",
   });
@@ -61,10 +61,10 @@ export default function Signup() {
           <div>
             <input
               type="text"
-              name="name"
+              name="username"
               placeholder="Name"
               className="px-4 py-2 border rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300"
-              value={formData.name}
+              value={formData.username}
               onChange={handleChange}
             />
           </div>
