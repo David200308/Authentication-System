@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { Form } from "@remix-run/react";
 import { LockClosedIcon, QrCodeIcon, BellIcon } from "@heroicons/react/24/outline";
+// import { useMutation } from "@tanstack/react-query";
+
+// const validateEmail = (email: string) => {
+//   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// };
 
 export default function Login() {
   const [loginMethod, setLoginMethod] = useState("password");
+  // const [email, setEmail] = useState("");
+  // const [emailError, setEmailError] = useState("");
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLDivElement>, method: string) => {
     if (event.key === "Enter" || event.key === " ") {
@@ -89,7 +96,7 @@ export default function Login() {
 
         {loginMethod === "qr" && (
           <div className="text-black">
-            <p>Scan the QR code to login.</p>
+            <p>Scan the QR code to login</p>
             <div className="mt-4">
                 {/* QR Code */}
             </div>
@@ -98,8 +105,15 @@ export default function Login() {
 
         {loginMethod === "notification" && (
           <div className="text-black">
-            <p>Login via Notification.</p>
-            <p className="mt-4">A login notification has been sent to your device.</p>
+            <p>Login via Notification</p>
+            <p className="mt-4">A login notification has been sent to your logined device.</p>
+
+            <input 
+              type="email" 
+              placeholder="Email"
+              className="px-4 py-2 mt-4 border w-full rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300" 
+            />
+
             <button className="px-6 py-2 mt-4 w-full bg-black text-white rounded hover:bg-gray-800">
               Send Notification
             </button>

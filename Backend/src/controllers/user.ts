@@ -1,20 +1,8 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { UserServices } from '../services/user';
-import { SignInSchema, SignUpSchema } from '../schemas/user';
+import { PasswordSignInSchema, SignUpSchema } from '../schemas/user';
 import { generateToken, passwordHash, passwordVerify, verifyToken, validateEmail } from '../utils/auth';
 import { Response, Request } from 'express';
-import { 
-    DELETE_REQUIRE_USERID, 
-    DELETE_SUCCESSFUL, 
-    INVALID_EMAIL, 
-    LOGIN_SUCCESSFUL, 
-    PASSWORD_INCORRECT, 
-    REGISTER_FAILED, 
-    REGISTER_REQUIRE, 
-    REGISTER_SUCCESSFUL_WAIT_FOR_VERIFICATION, 
-    UNAUTHORIZED, 
-    USER_NOT_FOUND 
-} from '../const/user';
 import { JwtPayload } from 'jsonwebtoken';
 
 @Controller("user")
@@ -25,7 +13,7 @@ export class UserController {
     async getUser(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED,
+                message: 'Unauthorized',
             });
             return;
         }
@@ -34,7 +22,7 @@ export class UserController {
         const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
             console.log(err);
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED,
+                message: 'Unauthorized',
                 error: err
             });
             return;
@@ -42,7 +30,7 @@ export class UserController {
 
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED
+                message: 'Unauthorized'
             });
             return;
         }
@@ -50,7 +38,7 @@ export class UserController {
         const data = await this.userService.getUserById(parseInt(payload.aud)).catch((err) => {
             console.log(err);
             response.status(HttpStatus.NOT_FOUND).json({
-                message: USER_NOT_FOUND
+                message: 'User not found'
             });
             return;
         });
@@ -61,7 +49,7 @@ export class UserController {
         };
 
         response.status(HttpStatus.NOT_FOUND).json({
-            message: USER_NOT_FOUND
+            message: 'User not found'
         });
     }
 
@@ -69,13 +57,13 @@ export class UserController {
     async createUser(@Body() data: SignUpSchema, @Res({ passthrough: true }) response: Response) {
         if (!data.email || !data.password || !data.username) {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: REGISTER_REQUIRE
+                message: 'Email, password, and username is required'
             });
             return;
         }
         if (!validateEmail(data.email)) {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: INVALID_EMAIL
+                message: 'Invalid email'
             });
             return;
         }
@@ -85,34 +73,34 @@ export class UserController {
             const result = await this.userService.createUser(data);
             if (!result) {
                 response.status(HttpStatus.BAD_REQUEST).json({
-                    message: REGISTER_FAILED
+                    message: 'Register failed'
                 });
                 return;
             }
         } catch (error) {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: REGISTER_FAILED
+                message: 'Register failed'
             });
             return;
         }
 
         response.status(HttpStatus.OK).json({
-            message: REGISTER_SUCCESSFUL_WAIT_FOR_VERIFICATION
+            message: 'Register successful'
         });
     }
 
-    @Post('login')
-    async login(@Body() data: SignInSchema, @Res({ passthrough: true }) response: Response) {
+    @Post('login/password')
+    async login(@Body() data: PasswordSignInSchema, @Res({ passthrough: true }) response: Response) {
         const user = await this.userService.getUserByEmail(data.email);
         if (!user) {
             response.status(HttpStatus.NOT_FOUND).json({
-                message: USER_NOT_FOUND
+                message: 'User not found'
             });
             return;
         }
         if (!(await passwordVerify(data.password, user.password))) {
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: PASSWORD_INCORRECT
+                message: 'Password incorrect'
             });
             return;
         }
@@ -127,16 +115,16 @@ export class UserController {
 
         response.cookie('token', token, { secure: true });
         response.status(HttpStatus.OK).json({
-            message: LOGIN_SUCCESSFUL, 
+            message: 'Login successful', 
             token: token
         });
     }
 
-    @Post('login/token')
-    async loginWithToken(@Body() data: { type: string }, @Req() request: Request , @Res({ passthrough: true }) response: Response) {
+    @Post('token')
+    async verifyToken(@Body() data: { type: string }, @Req() request: Request , @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token && !data.type && data.type !== 'token') {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: UNAUTHORIZED
+                message: 'Unauthorized'
             });
             return;
         }
@@ -144,21 +132,21 @@ export class UserController {
         const payload: JwtPayload = await verifyToken(request.cookies.token).catch((err) => {
             console.log(err);
             return response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED,
+                message: 'Unauthorized',
                 error: err
             });
         });
 
         if (!(typeof payload.aud === 'string')) {
             return response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED
+                message: 'Unauthorized'
             });
         }
 
         const user = await this.userService.getUserById(parseInt(payload.aud));
         if (!user) {
             response.status(HttpStatus.NOT_FOUND).json({
-                message: USER_NOT_FOUND
+                message: 'User not found'
             });
             return;
         }
@@ -173,23 +161,19 @@ export class UserController {
 
         response.cookie('token', token, { secure: true });
         response.status(HttpStatus.OK).json({
-            message: LOGIN_SUCCESSFUL,
-            token: token
+            message: 'Token verified',
+            status: true
         });
     }
 
-    @Delete(":id")
-    async deleteUser(@Param('id') id: string, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-        if (!id) {
-             response.status(HttpStatus.BAD_REQUEST).json({
-                message: DELETE_REQUIRE_USERID
-            });
-            return;
-        }
+    @Post('login/notification')
+    async loginWithNotification() {}
 
+    @Get('login/notification')
+    async getLoginNotification(@Req() request: Request , @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED
+                message: 'Unauthorized',
             });
             return;
         }
@@ -198,7 +182,7 @@ export class UserController {
         const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
             console.log(err);
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED,
+                message: 'Unauthorized',
                 error: err
             });
             return;
@@ -206,29 +190,26 @@ export class UserController {
 
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
             response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED
-            });
-            return;
-        }
-        if (payload.aud.toString() !== id.toString()) {
-            response.status(HttpStatus.UNAUTHORIZED).json({
-                message: UNAUTHORIZED
+                message: 'Unauthorized'
             });
             return;
         }
 
-        await this.userService.deleteUser(parseInt(id)).catch((err) => {
+        const data = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud)).catch((err) => {
             console.log(err);
             response.status(HttpStatus.NOT_FOUND).json({
-                message: USER_NOT_FOUND,
-                error: err
+                message: 'User not found'
             });
             return;
         });
 
-        response.status(HttpStatus.OK).json({
-            message: DELETE_SUCCESSFUL
-        });
+        return response.status(HttpStatus.OK).json(data);
     }
+
+    @Patch('login/notification/allow')
+    async allowLoginNotification() {}
+
+    @Patch('login/notification/reject')
+    async rejectLoginNotification() {}
 
 }
