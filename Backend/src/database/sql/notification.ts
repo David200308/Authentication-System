@@ -14,3 +14,7 @@
 export const GET_LATEST_NOTIFICATION_BY_USER_ID_SQL = 'SELECT * FROM notifications WHERE user_id = ? AND receiverAction = ? ORDER BY sentNotificationAt DESC LIMIT 1';
 
 export const GET_NOTIFICATIONS_BY_USER_ID_SQL = 'SELECT * FROM notifications WHERE user_id = ? ORDER BY sentNotificationAt DESC';
+
+export const CREATE_NOTIFICATION_SQL = 'INSERT INTO notifications SET ?';
+
+export const UPDATE_NOTIFICATION_SQL = 'UPDATE notifications SET receiverAction = ?, receiverActionAt = ? WHERE notification_uuid = ? AND user_id = ?';

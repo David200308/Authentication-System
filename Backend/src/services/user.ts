@@ -1,5 +1,5 @@
 import { connection } from "../database/database";
-import { SignUpSchema, User } from "../schemas/user";
+import { SignUpSchema, User, Notification } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
 import { 
     CREATE_USER_SQL, 
@@ -7,7 +7,7 @@ import {
     GET_USER_BY_ID_SQL,
     GET_USER_BY_NAME_SQL
 } from "../database/sql/user";
-import { GET_LATEST_NOTIFICATION_BY_USER_ID_SQL, GET_NOTIFICATIONS_BY_USER_ID_SQL } from "../database/sql/notification";
+import { GET_LATEST_NOTIFICATION_BY_USER_ID_SQL, GET_NOTIFICATIONS_BY_USER_ID_SQL, UPDATE_NOTIFICATION_SQL } from "../database/sql/notification";
 
 @Injectable()
 export class UserServices {
@@ -58,7 +58,7 @@ export class UserServices {
         try {
             const sql = GET_LATEST_NOTIFICATION_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, id);
-            const data = rows[0] as User;
+            const data = rows[0] as Notification;
             return data;
         } catch (error) {
             throw new Error(error);
@@ -71,6 +71,16 @@ export class UserServices {
             const [rows] = await connection.promise().query(sql, id);
             const data = rows as User[];
             return data;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
+    updateLoginNotification = async(receiverAction: string, notification_uuid: string, user_id: number) => {
+        try {
+            const sql = UPDATE_NOTIFICATION_SQL;
+            const [result] = await connection.promise().query(sql, [receiverAction, new Date(), notification_uuid, user_id]);
+            return result;
         } catch (error) {
             throw new Error(error);
         }

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { UserServices } from '../services/user';
-import { PasswordSignInSchema, SignUpSchema } from '../schemas/user';
+import { PasswordSignInSchema, SignUpSchema, UpdateNotificationLoginBodySchema } from '../schemas/user';
 import { generateToken, passwordHash, passwordVerify, verifyToken, validateEmail } from '../utils/auth';
 import { Response, Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
@@ -206,10 +206,82 @@ export class UserController {
         return response.status(HttpStatus.OK).json(data);
     }
 
-    @Patch('login/notification/allow')
-    async allowLoginNotification() {}
+    @Patch('login/notification/action')
+    async allowLoginNotification(@Body() data: UpdateNotificationLoginBodySchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token || !data.action || (data.action !== 'allow' && data.action !== 'reject')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized or invalid action',
+            });
+            return;
+        }
 
-    @Patch('login/notification/reject')
-    async rejectLoginNotification() {}
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        switch (data.action) {
+            case 'allow':
+                if (!data.authCode) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Auth code is required'
+                    });
+                    return;
+                }
+                // compare auth code
+                const notificationData = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud));
+
+                if (notificationData.notificationUuid !== data.notification_uuid || notificationData.authCode !== data.authCode) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Invalid auth code or notification uuid'
+                    });
+                    return;
+                }
+                // update notification in database
+                const result = await this.userService.updateLoginNotification('allow', data.notification_uuid, parseInt(payload.aud));
+                if (!result) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Update failed'
+                    });
+                    return;
+                }
+                response.status(HttpStatus.OK).json({
+                    message: 'Login allowed'
+                });
+                
+                break;
+            case 'reject':
+                // update notification in database
+                const resultReject = await this.userService.updateLoginNotification('reject', data.notification_uuid, parseInt(payload.aud));
+                if (!resultReject) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Update failed'
+                    });
+                    return;
+                }
+                response.status(HttpStatus.OK).json({
+                    message: 'Login rejected'
+                });
+
+                break;
+            default:
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Invalid action'
+                });
+                return;
+        }
+    }
 
 }

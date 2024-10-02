@@ -53,3 +53,9 @@ export type ReturnUserSchema = {
     createAt: Date;
     updateAt: Date;
 }
+
+export type UpdateNotificationLoginBodySchema = {
+    action: string;
+    notification_uuid: string;
+    authCode: string;
+}
