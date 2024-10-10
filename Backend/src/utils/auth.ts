@@ -1,5 +1,6 @@
 import { compare, hash } from "bcryptjs";
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import 'dotenv/config'
 
@@ -37,4 +38,16 @@ export const verifyToken = async (token: string) => {
 export function validateEmail(email: string) {
     const re = /\S+@\S+\.\S+/;
     return re.test(email);
+}
+
+export function generateUuid() {
+    return uuidv4();
+}
+
+export async function getIpLocation(ipaddress: string) {
+    const ipInfo = await fetch(`https://api.iplocation.net/?ip=${ipaddress}`);
+    const ipInfoJson = await ipInfo.json();
+    const location = ipInfoJson.country_name;
+
+    return location;
 }

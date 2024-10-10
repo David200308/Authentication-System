@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { UserServices } from '../services/user';
 import { PasswordSignInSchema, SignUpSchema, UpdateNotificationLoginBodySchema } from '../schemas/user';
-import { generateToken, passwordHash, passwordVerify, verifyToken, validateEmail } from '../utils/auth';
+import { generateToken, passwordHash, passwordVerify, verifyToken, validateEmail, generateUuid, getIpLocation } from '../utils/auth';
 import { Response, Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 
@@ -90,7 +90,7 @@ export class UserController {
     }
 
     @Post('login/password')
-    async login(@Body() data: PasswordSignInSchema, @Res({ passthrough: true }) response: Response) {
+    async login(@Body() data: PasswordSignInSchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         const user = await this.userService.getUserByEmail(data.email);
         if (!user) {
             response.status(HttpStatus.NOT_FOUND).json({
@@ -105,10 +105,19 @@ export class UserController {
             return;
         }
 
+        const authuuid = generateUuid();
+        const loginIpAddress = request.socket.remoteAddress;
+        const device = request.headers['user-agent'];
+        const location = await getIpLocation(loginIpAddress);
+
         const payload = {
             aud: user.id.toString(),
             email: user.email,
             username: user.username,
+            authuuid,
+            location,
+            ipaddress: loginIpAddress,
+            device,
         };
 
         const token = generateToken(payload);
@@ -121,7 +130,7 @@ export class UserController {
     }
 
     @Post('token')
-    async verifyToken(@Body() data: { type: string }, @Req() request: Request , @Res({ passthrough: true }) response: Response) {
+    async verifyToken(@Body() data: { type: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token && !data.type && data.type !== 'token') {
             response.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Unauthorized'
