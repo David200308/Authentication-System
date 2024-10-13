@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     loginDeviceCount INTEGER,
-    latestLoginAt TIMESTAMP
+    latestLoginAt TIMESTAMP,
+    MFAEnabled BOOLEAN,
+    MFAKey VARCHAR(255),
 );
 
 -- loginMethod: password, qrcode, notification
@@ -23,6 +25,8 @@ CREATE TABLE IF NOT EXISTS auth {
     loginDeviceName VARCHAR(255) NOT NULL,
     loginLocation VARCHAR(255) NOT NULL,
     notificationId INTEGER,
+    qrId INTEGER,
+    status BOOLEAN,
 }
 
 -- receiverAction: accept, reject, pending
@@ -37,4 +41,10 @@ CREATE TABLE IF NOT EXISTS notifications {
     receiverAction VARCHAR(255) NOT NULL,
     receiverActionAt TIMESTAMP,
     authCode VARCHAR(255) NOT NULL,
+}
+
+CREATE TABLE IF NOT EXISTS qr {
+}
+
+CREATE TABLE IF NOT EXISTS logs {   
 }
