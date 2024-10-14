@@ -8,14 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255),
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    loginDeviceCount INTEGER,
+    loginDeviceCount INTEGER NOT NULL DEFAULT 0,
     latestLoginAt TIMESTAMP,
     MFAEnabled BOOLEAN,
-    MFAKey VARCHAR(255),
+    MFAKey VARCHAR(255)
 );
 
--- loginMethod: password, qrcode, notification
-CREATE TABLE IF NOT EXISTS auth {
+-- loginMethod: general, qr, notification
+CREATE TABLE IF NOT EXISTS auth (
     auth_id INTEGER PRIMARY KEY AUTO_INCREMENT,
     auth_uuid VARCHAR(255) NOT NULL,
     user_id INTEGER NOT NULL,
@@ -25,12 +25,11 @@ CREATE TABLE IF NOT EXISTS auth {
     loginDeviceName VARCHAR(255) NOT NULL,
     loginLocation VARCHAR(255) NOT NULL,
     notificationId INTEGER,
-    qrId INTEGER,
-    status BOOLEAN,
-}
+    qrId INTEGER
+);
 
--- receiverAction: accept, reject, pending
-CREATE TABLE IF NOT EXISTS notifications {
+-- receiverAction: approved, rejected, pending
+CREATE TABLE IF NOT EXISTS notifications (
     notification_id INTEGER PRIMARY KEY AUTO_INCREMENT,
     user_id INTEGER NOT NULL,
     notification_uuid VARCHAR(255) NOT NULL,
@@ -41,10 +40,15 @@ CREATE TABLE IF NOT EXISTS notifications {
     receiverAction VARCHAR(255) NOT NULL,
     receiverActionAt TIMESTAMP,
     authCode VARCHAR(255) NOT NULL,
-}
+    alreadyUsed BOOLEAN NOT NULL DEFAULT FALSE
+);
 
-CREATE TABLE IF NOT EXISTS qr {
-}
+CREATE TABLE IF NOT EXISTS qr (
+);
 
-CREATE TABLE IF NOT EXISTS logs {   
-}
+CREATE TABLE IF NOT EXISTS logs (
+    log_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    log_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    content VARCHAR(255) NOT NULL
+);

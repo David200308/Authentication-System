@@ -7,6 +7,8 @@ export type User = {
     updateAt: Date;
     loginDeviceCount: number;
     latestLoginAt: Date;
+    MFAEnabled: boolean;
+    MFAKey: string;
     auths: Auth[];
 }
 
@@ -20,12 +22,13 @@ export type Auth = {
     loginDeviceName: string;
     loginLocation: string;
     notificationId?: Notification;
+    qrId?: any;
 };
 
 export type Notification = {
-    notificationId: number;
-    userId: number;
-    notificationUuid: string;
+    notification_id: number;
+    user_id: number;
+    notification_uuid: string;
     sentNotificationDeviceName: string;
     sentNotificationLocation: string;
     sentNotificationAt: Date;
@@ -33,7 +36,20 @@ export type Notification = {
     receiverAction: string;
     receiverActionAt: Date;
     authCode: string;
+    alreadyUsed: boolean;
 };
+
+export type Logs = {
+    log_id: number,
+    user_id: number,
+    log_time: Date,
+    content: string
+}
+
+export type CreateLogSchema = {
+    user_id: number,
+    content: string
+}
 
 export type SignUpSchema = {
     username: string;

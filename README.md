@@ -16,9 +16,9 @@
 
 ## ES256 JWT Signing Key Pair Generate
 
-Generate the ECDSA key pairs with secp256k1 curve
+Generate the ECDSA key pairs with prime256v1 curve
 
 ```
-openssl ecparam -name secp256k1 -genkey -noout -out private_key.pem
-openssl ec -in private_key.pem -pubout > public_key.pem
+openssl ecparam -name prime256v1 -genkey -noout -out private_key.pem
+openssl ec -in private_key.pem -pubout -out public_key.pem
 ```
