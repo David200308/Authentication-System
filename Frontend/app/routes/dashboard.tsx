@@ -16,7 +16,29 @@ const user: User = {
     logs: ["test 1", "test 2", "test 3"],
 };
 
+async function verifyToken() {
+    const response = await fetch("/user/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        "type": "token"
+      }),
+    });
+  
+    return response.json();
+}
+
 export default function Dashboard() {
+    useEffect(() => {
+        verifyToken().then(data => {
+            if (!data.status) {
+                window.location.href = "/login";
+            }
+        });
+    });
+
     const [open, setOpen] = useState(false);
     const [qrScanResult, setQrScanResult] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);

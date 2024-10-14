@@ -7,8 +7,11 @@ interface SignupData {
   email: string;
   password: string;
 }
+interface SignupResponse {
+  message: string;
+}
 
-async function signupUser(data: SignupData): Promise<void> {
+async function signupUser(data: SignupData): Promise<SignupResponse> {
   const response = await fetch("/user/register", {
     method: "POST",
     headers: {
@@ -31,15 +34,16 @@ export default function Signup() {
     password: "",
   });
 
-  const signupMutation = useMutation<void, Error, SignupData>({
+  const signupMutation = useMutation<SignupResponse, Error, SignupData>({
     mutationFn: signupUser,
-    onSuccess: (data) => {
+    onSuccess: (data: SignupResponse) => {
       console.log("User signed up successfully:", data);
-      // Handle 
+      if (data.message === "Register successful") {
+        window.location.href = "/login";
+      }
     },
     onError: (error: Error) => {
       console.error("Error signing up:", error.message);
-      // Handle 
     },
   });
 

@@ -150,9 +150,16 @@ export class UserController {
 
     @Post('token')
     async verifyToken(@Body() data: { type: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-        if (!request.cookies.token && !data.type && data.type !== 'token') {
-            response.status(HttpStatus.BAD_REQUEST).json({
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data.type && data.type !== 'token') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Request type is required'
             });
             return;
         }
