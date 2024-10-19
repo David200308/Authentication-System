@@ -13,6 +13,7 @@ interface LoginResponse {
 }
 
 async function loginUser(data: LoginData): Promise<LoginResponse> {
+  import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
   const response = await fetch("/api/user/login/password", {
     method: "POST",
     headers: {

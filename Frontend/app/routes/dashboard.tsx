@@ -33,6 +33,7 @@ interface Notification {
 }
 
 async function verifyToken() {
+    import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
     const response = await fetch("/api/user/token", {
         method: "POST",
         headers: {
@@ -51,6 +52,7 @@ async function verifyToken() {
 }
 
 async function checkNewNotificationLogin() {
+    import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
     const response = await fetch("/api/user/login/notification");
 
     if (!response.ok) {
@@ -76,6 +78,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     const fetchLogs = async () => {
+        import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
         const logsResponse = await fetch('/api/user/logs');
         if (!logsResponse.ok) {
             throw new Error("Failed to fetch logs");
@@ -152,6 +155,7 @@ export default function Dashboard() {
         if (action) {
             const authCode = prompt("Enter the auth code");
             if (authCode) {
+                import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
                 fetch("/api/user/login/notification/action", {
                     method: "PATCH",
                     headers: {
@@ -176,6 +180,7 @@ export default function Dashboard() {
                 });
             }
         } else {
+            import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
             fetch("/api/user/login/notification/action", {
                 method: "PATCH",
                 headers: {
