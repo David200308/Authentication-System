@@ -13,12 +13,13 @@ export const passwordVerify = async (password: string, hashedPassword: string) =
     return result;
 };
 
-export const generateToken = (payload: JwtPayload) => {
+export const generateToken = (payload: JwtPayload, expireFast: boolean) => {
     // use ES256 algorithm to sign payload
     const privateKey = process.env.JWT_PRIVATE_KEY.replace(/\\n/g, '\n');
     const token = sign(payload, privateKey, {
         algorithm: "ES256",
-        expiresIn: '1h',
+        // expireFast true 5 minuties, false 1 hour
+        expiresIn: expireFast ? 5 * 60 * 1000 : 60 * 60 * 1000
     });
 
     return token;

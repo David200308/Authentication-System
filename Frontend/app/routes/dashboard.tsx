@@ -2,48 +2,102 @@ import { useState, useRef, useEffect } from "react";
 // eslint-disable-next-line import/no-unresolved
 import { Setup2FADialog } from "~/components/Setup2FADialog";
 import QrScanner from "qr-scanner";
+import { useNavigate } from "@remix-run/react";
+import { useQuery } from "@tanstack/react-query";
 
 interface User {
+    id: string;
     username: string;
     email: string;
-    logs: string[];
 }
 
-// testing data
-const user: User = {
-    username: "Test User",
-    email: "test@user.com",
-    logs: ["test 1", "test 2", "test 3"],
-};
+interface Logs {
+    "log_id": number;
+    "user_id": number;
+    "log_time": string;
+    "content": string;
+}
+
+interface Notification {
+    notification_id: number;
+    user_id: number;
+    notification_uuid: string;
+    sentNotificationDeviceName: string;
+    sentNotificationLocation: string;
+    sentNotificationAt: Date;
+    sentNotificationIp: string;
+    receiverAction: string;
+    receiverActionAt: Date;
+    authCode: string;
+    alreadyUsed: boolean;
+}
 
 async function verifyToken() {
     const response = await fetch("/user/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        "type": "token"
-      }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            "type": "token"
+        }),
     });
-  
+
+    if (!response.ok) {
+        throw new Error("Failed to verify token");
+    }
+
+    return response.json();
+}
+
+async function checkNewNotificationLogin() {
+    const response = await fetch("/user/login/notification");
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch notification status");
+    }
+
     return response.json();
 }
 
 export default function Dashboard() {
-    useEffect(() => {
-        verifyToken().then(data => {
-            if (!data.status) {
-                window.location.href = "/login";
-            }
-        });
+    const [user, setUser] = useState<User>({
+        id: "",
+        username: "",
+        email: "",
     });
-
     const [open, setOpen] = useState(false);
     const [qrScanResult, setQrScanResult] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const qrScannerRef = useRef<QrScanner | null>(null);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [logs, setLogs] = useState<Logs[]>([]);
+
+    const navigate = useNavigate();
+
+    const fetchLogs = async () => {
+        const logsResponse = await fetch('/user/logs');
+        if (!logsResponse.ok) {
+            throw new Error("Failed to fetch logs");
+        }
+        const logsData = await logsResponse.json();
+        setLogs(logsData);
+    };
+
+    useEffect(() => {
+        verifyToken().then((data) => {
+            if (data.isValid) {
+                setUser(data.user);
+                fetchLogs();
+            }
+        }).catch((error) => {
+            console.log("Failed to verify token:", error);
+            navigate('/login');
+        });
+        return () => {
+            stopQrScanner();
+        };
+    }, []);
 
     const startQrScanner = async () => {
         if (!scannerOpen) {
@@ -64,9 +118,9 @@ export default function Dashboard() {
                         onDecodeError: error => console.error("QR code scan error", error),
                     }
                 );
-                
+
                 qrScannerRef.current.start();
-                
+
             } catch (error) {
                 console.error("Camera access denied or not available:", error);
             }
@@ -84,11 +138,67 @@ export default function Dashboard() {
         }
     };
 
-    useEffect(() => {
-        return () => {
-            stopQrScanner();
-        };
-    }, []);
+    const checkNotificationLoginQuery = useQuery<Notification, Error>({
+        queryKey: ["notificationStatus"],
+        queryFn: checkNewNotificationLogin,
+        refetchInterval: 5000,
+        enabled: true,
+    });
+
+    if (checkNotificationLoginQuery.data && checkNotificationLoginQuery.data.notification_uuid) {
+        const action = confirm(`
+            New login notification request from device ${checkNotificationLoginQuery.data.sentNotificationDeviceName} at ${checkNotificationLoginQuery.data.sentNotificationLocation} received. Do you want to proceed?
+        `);
+        if (action) {
+            const authCode = prompt("Enter the auth code");
+            if (authCode) {
+                fetch("/user/login/notification/action", {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        action: "approved",
+                        notification_uuid: checkNotificationLoginQuery.data.notification_uuid,
+                        authCode,
+                    }),
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Login approved");
+                    } else {
+                        alert("Failed to approve login");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred while approving the login.");
+                });
+            }
+        } else {
+            fetch("/user/login/notification/action", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    action: "rejected",
+                    notification_uuid: checkNotificationLoginQuery.data.notification_uuid,
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Login rejected");
+                } else {
+                    alert("Failed to reject login");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while rejecting the login.");
+            });
+        }
+    }
 
     return (
         <div className="max-w-4xl mx-auto mt-10">
@@ -140,12 +250,14 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            <div className="mt-8 p-6 bg-white shadow rounded-lg text-black">
-                <h2 className="text-2xl font-semibold">User Logs</h2>
-                <ul className="mt-4 space-y-2">
-                    {user.logs.map((log, index) => (
-                        <li key={index} className="text-lg text-gray-700">
-                            {log}
+            <div className="mt-8 p-6 shadow-lg rounded-lg text-black">
+                <h2 className="text-3xl font-bold mb-4">User Logs</h2>
+                <ul className="mt-4 space-y-4">
+                    {logs && logs.map((log, index) => (
+                        <li key={index} className="p-4 border-l-4 border-gray-400 rounded-lg">
+                            <span className="font-semibold">Log Time:</span> <span>{log.log_time}</span>
+                            <br />
+                            <span className="font-semibold">Content:</span> <span>{log.content}</span>
                         </li>
                     ))}
                 </ul>

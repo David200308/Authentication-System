@@ -12,7 +12,14 @@
 //     alreadyUsed BOOLEAN NOT NULL DEFAULT FALSE
 // }
 
-export const GET_LATEST_NOTIFICATION_BY_USER_ID_SQL = 'SELECT * FROM notifications WHERE user_id = ? AND receiverAction = ? ORDER BY sentNotificationAt DESC LIMIT 1';
+export const GET_LATEST_NOTIFICATION_BY_USER_ID_SQL = `
+    SELECT * FROM notifications 
+    WHERE user_id = ? 
+      AND receiverAction = ? 
+      AND sentNotificationAt >= NOW() - INTERVAL 5 MINUTE 
+    ORDER BY sentNotificationAt DESC 
+    LIMIT 1
+`;
 
 export const GET_NOTIFICATIONS_BY_USER_ID_SQL = 'SELECT * FROM notifications WHERE user_id = ? ORDER BY sentNotificationAt DESC';
 

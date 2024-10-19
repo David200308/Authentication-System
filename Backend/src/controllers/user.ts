@@ -120,7 +120,7 @@ export class UserController {
             device,
         };
 
-        const token = generateToken(payload);
+        const token = generateToken(payload, false);
 
         const createLogResult = await this.userService.createLog({
             user_id: user.id, 
@@ -144,7 +144,6 @@ export class UserController {
         response.cookie('token', token, { secure: true });
         response.status(HttpStatus.OK).json({
             message: 'Login successful', 
-            token: token
         });
     }
 
@@ -186,18 +185,14 @@ export class UserController {
             return;
         }
 
-        const newPayload = {
-            aud: user.id.toString(),
-            email: user.email,
-            username: user.username,
-        };
-
-        const token = generateToken(newPayload);
-
-        response.cookie('token', token, { secure: true });
-        response.status(HttpStatus.OK).json({
-            message: 'Token verified',
-            status: true
+        return response.status(HttpStatus.OK).json({
+            message: 'Token valid',
+            isValid: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username
+            }
         });
     }
 
@@ -275,6 +270,18 @@ export class UserController {
             });
             return;
         }
+
+        const payload = {
+            email: user.email,
+            notification_uuid,
+            location,
+            ipaddress: loginIpAddress,
+            device,
+            usage: 'notification login verification'
+        };
+
+        const token = generateToken(payload, true);
+        response.cookie('token', token, { secure: true });
         
         response.status(HttpStatus.OK).json({
             message: 'Notification sent',
@@ -317,7 +324,7 @@ export class UserController {
             return;
         });
 
-        response.status(HttpStatus.OK).json(data);
+        response.status(HttpStatus.OK).json(data ?? {});
     }
 
     @Patch('login/notification/action')
@@ -399,15 +406,39 @@ export class UserController {
         }
     }
 
-    @Post('login/notification/status')
-    async getLoginNotificationStatus(@Body() bodyData: { notification_uuid: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-        if (!bodyData.notification_uuid) {
-            response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Notification uuid is required',
+    @Get('login/notification/status')
+    async getLoginNotificationStatus(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
             });
             return;
         }
-        const notification_uuid = bodyData.notification_uuid;
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object") {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+        if (payload.usage !== 'notification login verification') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token usage'
+            });
+            return; 
+        }
+
+        const notification_uuid = payload.notification_uuid;
         const data = await this.userService.getUserNotificationByNotificationUUId(notification_uuid);
         if (!data) {
             response.status(HttpStatus.NOT_FOUND).json({
@@ -446,7 +477,7 @@ export class UserController {
                 device,
             };
 
-            const token = generateToken(payload);
+            const token = generateToken(payload, false);
 
             const createLogResult = await this.userService.createLog({
                 user_id: user.id, 
@@ -478,10 +509,13 @@ export class UserController {
             response.cookie('token', token, { secure: true });
             response.status(HttpStatus.OK).json({
                 message: 'Login successful',
-                token: token
+                status: 'approved'
             });
+            return;
         }
-        return response.status(HttpStatus.OK).json(data);
+        return response.status(HttpStatus.OK).json({
+            status: data.receiverAction
+        });
     }
 
 }
