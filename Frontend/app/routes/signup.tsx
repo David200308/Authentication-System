@@ -12,8 +12,7 @@ interface SignupResponse {
 }
 
 async function signupUser(data: SignupData): Promise<SignupResponse> {
-  import.meta.env.VITE_NODE_TLS_REJECT_UNAUTHORIZED = 0;
-  const response = await fetch(`/api/user/register`, {
+    const response = await fetch(`/api/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
