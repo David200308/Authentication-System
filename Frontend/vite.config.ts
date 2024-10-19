@@ -3,11 +3,14 @@ import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
-	process.env = { ...process.env, ...loadEnv(mode, import.meta.dirname) };
-	const backendUrl = process.env.VITE_PUBLIC_BACKEND_URL;
-	if (!backendUrl) throw new Error('Add `VITE_PUBLIC_BACKEND_URL` to the .env file');
-	return {
-		plugins: [
+  process.env = { ...process.env, ...loadEnv(mode, import.meta.dirname) };
+  const backendUrl = process.env.VITE_PUBLIC_BACKEND_URL;
+
+  if (!backendUrl) throw new Error('Add `VITE_PUBLIC_BACKEND_URL` to the .env file');
+
+  return {
+    base: '/',
+    plugins: [
       remix({
         future: {
           v3_fetcherPersist: true,
@@ -18,12 +21,14 @@ export default defineConfig(({ mode }) => {
       tsconfigPaths(),
     ],
     server: {
-      proxy: { 
-        '/user': { 
-          target: backendUrl, 
-          changeOrigin: true 
-        } 
-      } 
+      historyApiFallback: true,
+      proxy: {
+        '/api': {
+          target: backendUrl,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '')
+        },
+      },
     },
-	};
+  };
 });

@@ -33,7 +33,7 @@ interface Notification {
 }
 
 async function verifyToken() {
-    const response = await fetch("/user/token", {
+    const response = await fetch("/api/user/token", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -51,7 +51,7 @@ async function verifyToken() {
 }
 
 async function checkNewNotificationLogin() {
-    const response = await fetch("/user/login/notification");
+    const response = await fetch("/api/user/login/notification");
 
     if (!response.ok) {
         throw new Error("Failed to fetch notification status");
@@ -76,7 +76,7 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     const fetchLogs = async () => {
-        const logsResponse = await fetch('/user/logs');
+        const logsResponse = await fetch('/api/user/logs');
         if (!logsResponse.ok) {
             throw new Error("Failed to fetch logs");
         }
@@ -152,7 +152,7 @@ export default function Dashboard() {
         if (action) {
             const authCode = prompt("Enter the auth code");
             if (authCode) {
-                fetch("/user/login/notification/action", {
+                fetch("/api/user/login/notification/action", {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
@@ -176,7 +176,7 @@ export default function Dashboard() {
                 });
             }
         } else {
-            fetch("/user/login/notification/action", {
+            fetch("/api/user/login/notification/action", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

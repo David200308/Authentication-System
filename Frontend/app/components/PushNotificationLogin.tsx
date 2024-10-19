@@ -13,7 +13,7 @@ interface StatusResponse {
 }
 
 async function sendNotification(email: string): Promise<NotificationResponse> {
-    const response = await fetch("/user/login/notification", {
+    const response = await fetch("/api/user/login/notification", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -29,7 +29,7 @@ async function sendNotification(email: string): Promise<NotificationResponse> {
 }
 
 async function checkNotificationStatus(): Promise<StatusResponse> {
-    const response = await fetch("/user/login/notification/status");
+    const response = await fetch("/api/user/login/notification/status");
 
     if (!response.ok) {
         throw new Error("Failed to fetch notification status");

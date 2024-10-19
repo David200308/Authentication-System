@@ -13,7 +13,7 @@ interface LoginResponse {
 }
 
 async function loginUser(data: LoginData): Promise<LoginResponse> {
-  const response = await fetch("/user/login/password", {
+  const response = await fetch("/api/user/login/password", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -38,9 +38,7 @@ export default function NormalLogin() {
     mutationFn: loginUser,
     onSuccess: (data: LoginResponse) => {
       console.log("User logged in successfully:", data);
-      // Store the token in localStorage or another appropriate place
-      localStorage.setItem("authToken", data.token);
-      window.location.href = "/dashboard"; // Redirect after successful login
+      window.location.href = "/dashboard";
     },
     onError: (error: Error) => {
       console.error("Error logging in:", error.message);
