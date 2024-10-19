@@ -13,7 +13,7 @@ interface StatusResponse {
 }
 
 async function sendNotification(email: string): Promise<NotificationResponse> {
-    import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+    import.meta.env.VITE_NODE_TLS_REJECT_UNAUTHORIZED = 0;
     const response = await fetch("/api/user/login/notification", {
         method: "POST",
         headers: {
@@ -30,7 +30,7 @@ async function sendNotification(email: string): Promise<NotificationResponse> {
 }
 
 async function checkNotificationStatus(): Promise<StatusResponse> {
-    import.meta.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+    import.meta.env.VITE_NODE_TLS_REJECT_UNAUTHORIZED = 0;
     const response = await fetch("/api/user/login/notification/status");
 
     if (!response.ok) {
