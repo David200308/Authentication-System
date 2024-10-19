@@ -163,18 +163,20 @@ export class UserController {
             return;
         }
 
-        const payload: JwtPayload = await verifyToken(request.cookies.token).catch((err) => {
+        const payload: JwtPayload | void = await verifyToken(request.cookies.token).catch((err) => {
             console.log(err);
-            return response.status(HttpStatus.UNAUTHORIZED).json({
+            response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized',
                 error: err
             });
+            return;
         });
 
-        if (!(typeof payload.aud === 'string')) {
-            return response.status(HttpStatus.UNAUTHORIZED).json({
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
             });
+            return;
         }
 
         const user = await this.userService.getUserById(parseInt(payload.aud));
