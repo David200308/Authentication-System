@@ -1,6 +1,6 @@
-import { Form } from "@remix-run/react";
+import { Form, useNavigate } from "@remix-run/react";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface SignupData {
   username: string;
@@ -12,7 +12,7 @@ interface SignupResponse {
 }
 
 async function signupUser(data: SignupData): Promise<SignupResponse> {
-    const response = await fetch(`/api/user/register`, {
+  const response = await fetch(`/api/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -27,11 +27,40 @@ async function signupUser(data: SignupData): Promise<SignupResponse> {
   return response.json();
 }
 
+async function verifyToken() {
+  const response = await fetch("/api/user/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      "type": "token"
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to verify token");
+  }
+
+  return response.json();
+}
+
 export default function Signup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<SignupData>({
     username: "",
     email: "",
     password: "",
+  });
+
+  useEffect(() => {
+    verifyToken().then((data) => {
+      if (data.isValid) {
+        navigate('/dashboard');
+      }
+    }).catch(() => {
+      console.log("need to login");
+    });
   });
 
   const signupMutation = useMutation<SignupResponse, Error, SignupData>({

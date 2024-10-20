@@ -1,5 +1,6 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "@remix-run/react";
+import { Link, useNavigate } from "@remix-run/react";
+import { useEffect } from "react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -8,7 +9,37 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+async function verifyToken() {
+  const response = await fetch("/api/user/token", {
+  method: "POST",
+  headers: {
+      "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+      "type": "token"
+  }),
+});
+
+if (!response.ok) {
+  throw new Error("Failed to verify token");
+}
+
+return response.json();
+}
+
 export default function Index() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    verifyToken().then((data) => {
+      if (data.isValid) {
+        navigate('/dashboard');
+      }
+    }).catch(() => {
+      console.log("need to login");
+    });
+  });
+
   return (
     <div className="flex h-screen items-center justify-center bg-gray-100">
       <div className="text-center">

@@ -108,8 +108,10 @@ export class UserController {
         const authuuid = generateUuid();
         let loginIpAddress = request.headers['x-forwarded-for'];
         if (Array.isArray(loginIpAddress)) {
-            console.log(loginIpAddress);
             loginIpAddress = loginIpAddress[0];
+        }
+        if (loginIpAddress.includes(',')) {
+            loginIpAddress = loginIpAddress.split(',')[0].trim();
         }
         const device = request.headers['user-agent'];
         const location = await getIpLocation(loginIpAddress);
@@ -265,8 +267,10 @@ export class UserController {
         const notification_uuid = generateUuid();
         let loginIpAddress = request.headers['x-forwarded-for'];
         if (Array.isArray(loginIpAddress)) {
-            console.log(loginIpAddress);
             loginIpAddress = loginIpAddress[0];
+        }
+        if (loginIpAddress.includes(',')) {
+            loginIpAddress = loginIpAddress.split(',')[0].trim();
         }
         const device = request.headers['user-agent'];
         const location = await getIpLocation(loginIpAddress);
@@ -475,8 +479,10 @@ export class UserController {
             const authuuid = generateUuid();
             let loginIpAddress = request.headers['x-forwarded-for'];
             if (Array.isArray(loginIpAddress)) {
-                console.log(loginIpAddress);
                 loginIpAddress = loginIpAddress[0];
+            }
+            if (loginIpAddress.includes(',')) {
+                loginIpAddress = loginIpAddress.split(',')[0].trim();
             }
             const device = request.headers['user-agent'];
             const location = await getIpLocation(loginIpAddress);
