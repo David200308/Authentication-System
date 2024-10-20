@@ -1,9 +1,22 @@
 import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { UserServices } from '../services/user';
-import { PasswordSignInSchema, SignUpSchema, UpdateNotificationLoginBodySchema } from '../schemas/user';
-import { generateToken, passwordHash, passwordVerify, verifyToken, validateEmail, generateUuid, getIpLocation, generateRandom6Digits } from '../utils/auth';
 import { Response, Request } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
+import { 
+    PasswordSignInSchema, 
+    SignUpSchema, 
+    UpdateNotificationLoginBodySchema 
+} from '../schemas/user';
+import { 
+    generateToken, 
+    passwordHash, 
+    passwordVerify, 
+    verifyToken, 
+    validateEmail, 
+    generateUuid, 
+    generateRandom6Digits, 
+    getIPDeviiceNameLocation 
+} from '../utils/auth';
 
 @Controller("user")
 export class UserController {
@@ -29,6 +42,15 @@ export class UserController {
         });
 
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
             });
@@ -106,15 +128,7 @@ export class UserController {
         }
 
         const authuuid = generateUuid();
-        let loginIpAddress = request.headers['x-forwarded-for'];
-        if (Array.isArray(loginIpAddress)) {
-            loginIpAddress = loginIpAddress[0];
-        }
-        if (loginIpAddress.includes(',')) {
-            loginIpAddress = loginIpAddress.split(',')[0].trim();
-        }
-        const device = request.headers['user-agent'];
-        const location = await getIpLocation(loginIpAddress);
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
 
         const payload = {
             aud: user.id.toString(),
@@ -127,6 +141,21 @@ export class UserController {
         };
 
         const token = generateToken(payload, false);
+
+        const createAuthRes = await this.userService.createAuthRecord({
+            auth_uuid: authuuid,
+            user_id: user.id,
+            ipAddress: loginIpAddress,
+            loginMethod: 'general',
+            loginDeviceName: device,
+            loginLocation: location
+        });
+        if (!createAuthRes) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create Auth Record failed'
+            });
+            return;
+        }
 
         const createLogResult = await this.userService.createLog({
             user_id: user.id, 
@@ -185,6 +214,15 @@ export class UserController {
             return;
         }
 
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
         const user = await this.userService.getUserById(parseInt(payload.aud));
         if (!user) {
             response.status(HttpStatus.NOT_FOUND).json({
@@ -230,6 +268,15 @@ export class UserController {
             return;
         }
 
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
         const data = await this.userService.getLogsByUserId(parseInt(payload.aud)).catch((err) => {
             console.log(err);
             response.status(HttpStatus.NOT_FOUND).json({
@@ -265,15 +312,7 @@ export class UserController {
         }
         
         const notification_uuid = generateUuid();
-        let loginIpAddress = request.headers['x-forwarded-for'];
-        if (Array.isArray(loginIpAddress)) {
-            loginIpAddress = loginIpAddress[0];
-        }
-        if (loginIpAddress.includes(',')) {
-            loginIpAddress = loginIpAddress.split(',')[0].trim();
-        }
-        const device = request.headers['user-agent'];
-        const location = await getIpLocation(loginIpAddress);
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
         const authCode = generateRandom6Digits();
         const authCodeHash = await passwordHash(authCode.toString());
         
@@ -330,6 +369,15 @@ export class UserController {
             return;
         }
 
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
         const data = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud)).catch((err) => {
             console.log(err);
             response.status(HttpStatus.NOT_FOUND).json({
@@ -361,6 +409,15 @@ export class UserController {
         });
 
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
             });
@@ -477,15 +534,7 @@ export class UserController {
         }
         if (data.receiverAction === 'approved') {
             const authuuid = generateUuid();
-            let loginIpAddress = request.headers['x-forwarded-for'];
-            if (Array.isArray(loginIpAddress)) {
-                loginIpAddress = loginIpAddress[0];
-            }
-            if (loginIpAddress.includes(',')) {
-                loginIpAddress = loginIpAddress.split(',')[0].trim();
-            }
-            const device = request.headers['user-agent'];
-            const location = await getIpLocation(loginIpAddress);
+            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
 
             const payload = {
                 aud: user.id.toString(),
@@ -498,6 +547,22 @@ export class UserController {
             };
 
             const token = generateToken(payload, false);
+
+            const createAuthRes = await this.userService.createAuthRecord({
+                auth_uuid: authuuid,
+                user_id: user.id,
+                ipAddress: loginIpAddress,
+                loginMethod: 'notification',
+                loginDeviceName: device,
+                loginLocation: location,
+                notificationId: data.notification_id.toString()
+            });
+            if (!createAuthRes) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create Auth Record failed'
+                });
+                return;
+            }
 
             const createLogResult = await this.userService.createLog({
                 user_id: user.id, 

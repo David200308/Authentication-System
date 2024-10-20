@@ -1,6 +1,7 @@
 import { compare, hash } from "bcryptjs";
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import { Request } from 'express';
 import 'dotenv/config'
 
 export const passwordHash = async (password: string) => {
@@ -19,7 +20,7 @@ export const generateToken = (payload: JwtPayload, expireFast: boolean) => {
     const token = sign(payload, privateKey, {
         algorithm: "ES256",
         // expireFast true 5 minuties, false 1 hour
-        expiresIn: expireFast ? 5 * 60 * 1000 : 60 * 60 * 1000
+        expiresIn: expireFast ? "5m" : "1h"
     });
 
     return token;
@@ -58,4 +59,18 @@ export function generateRandom6Digits() {
     const combinedNumber = (timestamp + randomPart) % 1000000;
     const sixDigitNumber = combinedNumber.toString().padStart(6, '0');
     return parseInt(sixDigitNumber, 10);
+}
+
+export async function getIPDeviiceNameLocation(request: Request) {
+    let loginIpAddress = request.headers['x-forwarded-for'];
+    if (Array.isArray(loginIpAddress)) {
+        loginIpAddress = loginIpAddress[0];
+    }
+    if (loginIpAddress.includes(',')) {
+        loginIpAddress = loginIpAddress.split(',')[0].trim();
+    }
+    const device = request.headers['user-agent'];
+    const location = await getIpLocation(loginIpAddress);
+
+    return { loginIpAddress, device, location };
 }

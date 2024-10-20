@@ -12,18 +12,31 @@ export type User = {
     auths: Auth[];
 }
 
+// loginMethod: general, qr, notification
 export type Auth = {
-    id: number;
-    uuid: string;
-    userId: number;
+    auth_id: number;
+    auth_uuid: string;
+    user_id: number;
     loginAt: Date;
     ipAddress: string;
-    loginMethod: string;
+    loginMethod: "general" | "qr" | "notification";
     loginDeviceName: string;
     loginLocation: string;
-    notificationId?: Notification;
-    qrId?: any;
+    notificationId?: string;
+    qrId?: string;
 };
+
+// loginMethod: general, qr, notification
+export type CreateAuthRecordType = {
+    auth_uuid: string;
+    user_id: number;
+    ipAddress: string;
+    loginMethod: "general" | "qr" | "notification";
+    loginDeviceName: string;
+    loginLocation: string;
+    notificationId?: string;
+    qrId?: string;
+}
 
 export type Notification = {
     notification_id: number;
@@ -33,7 +46,7 @@ export type Notification = {
     sentNotificationLocation: string;
     sentNotificationAt: Date;
     sentNotificationIp: string;
-    receiverAction: string;
+    receiverAction: 'approved' | 'rejected';
     receiverActionAt: Date;
     authCode: string;
     alreadyUsed: boolean;
@@ -71,7 +84,7 @@ export type ReturnUserSchema = {
 }
 
 export type UpdateNotificationLoginBodySchema = {
-    action: string;
+    action: 'approved' | 'rejected';
     notification_uuid: string;
     authCode: string;
 }

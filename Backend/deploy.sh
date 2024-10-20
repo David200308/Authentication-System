@@ -17,11 +17,11 @@ else
 fi
 
 # Check if the Docker image exists
-sudo docker image inspect api_backend > /dev/null 2>&1
+sudo docker image inspect backend_backend > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
     # Remove the Docker image if it exists
-    sudo docker image rm api_backend
+    sudo docker image rm backend_backend
 
     # Check for errors
     if [ $? -ne 0 ]; then
@@ -29,7 +29,7 @@ if [ $? -eq 0 ]; then
         exit 1
     fi
 else
-    echo "Docker image 'api_backend' does not exist, skipping removal."
+    echo "Docker image 'backend_backend' does not exist, skipping removal."
 fi
 
 # Start the Docker container in detached mode

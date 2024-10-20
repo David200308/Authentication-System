@@ -14,7 +14,7 @@ interface User {
 interface Logs {
     "log_id": number;
     "user_id": number;
-    "log_time": string;
+    "log_time": Date;
     "content": string;
 }
 
@@ -97,7 +97,7 @@ export default function Dashboard() {
         return () => {
             stopQrScanner();
         };
-    }, []);
+    });
 
     const startQrScanner = async () => {
         if (!scannerOpen) {
@@ -255,7 +255,9 @@ export default function Dashboard() {
                 <ul className="mt-4 space-y-4">
                     {logs && logs.map((log, index) => (
                         <li key={index} className="p-4 border-l-4 border-gray-400 rounded-lg">
-                            <span className="font-semibold">Log Time:</span> <span>{log.log_time}</span>
+                            <span className="font-semibold">Log Time:</span> <span>{
+                                log.log_time.toISOString().split("T")[0] + " " + log.log_time.toISOString().split("T")[1].split(".")[0]
+                            }</span>
                             <br />
                             <span className="font-semibold">Content:</span> <span>{log.content}</span>
                         </li>

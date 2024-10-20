@@ -1,5 +1,5 @@
 import { connection } from "../database/database";
-import { SignUpSchema, User, Notification, Logs, CreateLogSchema } from "../schemas/user";
+import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordType } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
 import { 
     ADD_DEVICE_COUNT_SQL,
@@ -18,6 +18,7 @@ import {
     UPDATE_NOTIFICATION_SQL 
 } from "../database/sql/notification";
 import { CREATE_LOG_SQL, GET_LOGS_BY_USERID } from "../database/sql/logs";
+import { CREATE_AUTH_SQL } from "../database/sql/auth";
 
 @Injectable()
 export class UserServices {
@@ -85,8 +86,10 @@ export class UserServices {
         }
     }
 
-    createAuthRecord = async () => {
-        return;
+    createAuthRecord = async (data: CreateAuthRecordType) => {
+        const sql = CREATE_AUTH_SQL;
+        const [result] = await connection.promise().query(sql, data);
+        return result;
     };
 
     createLoginNotification = async (
