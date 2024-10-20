@@ -106,7 +106,11 @@ export class UserController {
         }
 
         const authuuid = generateUuid();
-        const loginIpAddress = request.socket.remoteAddress;
+        let loginIpAddress = request.headers['x-forwarded-for'];
+        if (Array.isArray(loginIpAddress)) {
+            console.log(loginIpAddress);
+            loginIpAddress = loginIpAddress[0];
+        }
         const device = request.headers['user-agent'];
         const location = await getIpLocation(loginIpAddress);
 
@@ -259,7 +263,7 @@ export class UserController {
         }
         
         const notification_uuid = generateUuid();
-        let loginIpAddress = request.ip || request.headers['x-forwarded-for'];
+        let loginIpAddress = request.headers['x-forwarded-for'];
         if (Array.isArray(loginIpAddress)) {
             console.log(loginIpAddress);
             loginIpAddress = loginIpAddress[0];
@@ -469,7 +473,11 @@ export class UserController {
         }
         if (data.receiverAction === 'approved') {
             const authuuid = generateUuid();
-            const loginIpAddress = request.socket.remoteAddress;
+            let loginIpAddress = request.headers['x-forwarded-for'];
+            if (Array.isArray(loginIpAddress)) {
+                console.log(loginIpAddress);
+                loginIpAddress = loginIpAddress[0];
+            }
             const device = request.headers['user-agent'];
             const location = await getIpLocation(loginIpAddress);
 
