@@ -291,7 +291,6 @@ export class UserController {
             return;
         }
 
-        
     }
 
     @Get('logs')
@@ -584,9 +583,9 @@ export class UserController {
             });
             return;
         }
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
         if (data.receiverAction === 'approved') {
             const authuuid = generateUuid();
-            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
 
             const payload = {
                 aud: user.id.toString(),
@@ -647,6 +646,29 @@ export class UserController {
             response.status(HttpStatus.OK).json({
                 message: 'Login successful',
                 status: 'approved'
+            });
+            return;
+        } else if (data.receiverAction === 'rejected') {
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id, 
+                content:`Rejected Login via sent notification in ${location} use ${device}`
+            });
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+            const updateAlreadyUsed = await this.userService.updateAlreadyUsedNotification(notification_uuid);
+            if (!updateAlreadyUsed) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update already used failed'
+                });
+                return;
+            }
+
+            response.status(HttpStatus.OK).json({
+                status: data.receiverAction
             });
             return;
         }
