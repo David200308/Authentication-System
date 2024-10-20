@@ -7,6 +7,8 @@ const proxyRequest = (request: Request) => {
   const { href } = new URL(pathname, ORIGIN);
   
   const headers = new Headers(request.headers);
+
+  console.log("IP: ", request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip') || request.headers.get('x-real-ip'));
   
   headers.set('Host', ORIGIN.split('//')[1]);
   
