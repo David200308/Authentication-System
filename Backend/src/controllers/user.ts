@@ -187,7 +187,7 @@ export class UserController {
             return;
         }
 
-        return response.status(HttpStatus.OK).json({
+        response.status(HttpStatus.OK).json({
             message: 'Token valid',
             isValid: true,
             user: {
@@ -259,7 +259,11 @@ export class UserController {
         }
         
         const notification_uuid = generateUuid();
-        const loginIpAddress = request.socket.remoteAddress;
+        let loginIpAddress = request.ip || request.headers['x-forwarded-for'];
+        if (Array.isArray(loginIpAddress)) {
+            console.log(loginIpAddress);
+            loginIpAddress = loginIpAddress[0];
+        }
         const device = request.headers['user-agent'];
         const location = await getIpLocation(loginIpAddress);
         const authCode = generateRandom6Digits();
@@ -515,7 +519,7 @@ export class UserController {
             });
             return;
         }
-        return response.status(HttpStatus.OK).json({
+        response.status(HttpStatus.OK).json({
             status: data.receiverAction
         });
     }

@@ -42,12 +42,14 @@ export default function PushNotificationLogin() {
     const [email, setEmail] = useState<string>("");
     const [rejectNotification, setRejectNotification] = useState<boolean>(false);
     const [notificationAuthCode, setNotificationAuthCode] = useState<string>();
+    const [checkStatus, setCheckStatus] = useState<boolean>(false);
 
     const notificationMutation = useMutation<NotificationResponse, Error, string>({
         mutationFn: sendNotification,
         onSuccess: (data) => {
             setNotificationAuthCode(data.authCode);
             console.log("Notification sent:", data);
+            setCheckStatus(true);
         },
         onError: (error) => {
             console.error("Error sending notification:", error.message);
@@ -57,8 +59,8 @@ export default function PushNotificationLogin() {
     const checkNotificationLoginQuery = useQuery<StatusResponse, Error>({
         queryKey: ["notificationStatus"],
         queryFn: checkNotificationStatus,
-        refetchInterval: 5000,
-        enabled: true,
+        refetchInterval: checkStatus ? 5000 : false,
+        enabled: checkStatus,
     });
 
     if (checkNotificationLoginQuery.data?.status === "approved") {
@@ -75,11 +77,8 @@ export default function PushNotificationLogin() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        notificationMutation.mutate(email, {
-            onSuccess: () => {
-                checkNotificationLoginQuery.refetch();
-            },
-        });
+        setRejectNotification(false); // Reset rejection state on new submission
+        notificationMutation.mutate(email);
     };
 
     return (
@@ -108,21 +107,17 @@ export default function PushNotificationLogin() {
                     {notificationMutation.isPending ? "Sending..." : "Send Notification"}
                 </button>
             </Form>
-            {
-                notificationAuthCode && (
-                    <p className="font-bold mt-4 text-black">
-                        Auth Code: {notificationAuthCode}
-                    </p>
-                )
-            }
+            {notificationAuthCode && (
+                <p className="font-bold mt-4 text-black">
+                    Auth Code: {notificationAuthCode}
+                </p>
+            )}
 
             {rejectNotification && (
                 <p className="text-red-500 mt-4">Login request rejected. Please try again.</p>
             )}
 
-            {checkNotificationLoginQuery.isFetching &&
-                <p>Checking notification status...</p>
-            }
+            {checkNotificationLoginQuery.isFetching && <p>Checking notification status...</p>}
         </div>
     );
 }
