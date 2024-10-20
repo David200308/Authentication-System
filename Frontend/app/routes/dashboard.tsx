@@ -97,7 +97,7 @@ export default function Dashboard() {
         return () => {
             stopQrScanner();
         };
-    });
+    }, []);
 
     const startQrScanner = async () => {
         if (!scannerOpen) {

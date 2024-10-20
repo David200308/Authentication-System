@@ -61,7 +61,7 @@ export default function Signup() {
     }).catch(() => {
       console.log("need to login");
     });
-  });
+  }, []);
 
   const signupMutation = useMutation<SignupResponse, Error, SignupData>({
     mutationFn: signupUser,
