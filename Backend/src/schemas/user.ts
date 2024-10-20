@@ -60,8 +60,8 @@ export type Logs = {
 }
 
 export type CreateLogSchema = {
-    user_id: number,
-    content: string
+    user_id: number;
+    content: string;
 }
 
 export type SignUpSchema = {

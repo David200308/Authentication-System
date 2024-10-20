@@ -176,7 +176,7 @@ export class UserController {
             return;
         }
 
-        response.cookie('token', token, { secure: true });
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
         response.status(HttpStatus.OK).json({
             message: 'Login successful', 
         });
@@ -240,6 +240,58 @@ export class UserController {
                 username: user.username
             }
         });
+    }
+
+    @Post('mfa')
+    async mfa(@Body() data: { code: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data.code) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Code is required'
+            });
+            return;
+        }
+
+        const payload: JwtPayload | void = await verifyToken(request.cookies.token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserById(parseInt(payload.aud));
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        
     }
 
     @Get('logs')
@@ -334,7 +386,7 @@ export class UserController {
         };
 
         const token = generateToken(payload, true);
-        response.cookie('token', token, { secure: true });
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
         
         response.status(HttpStatus.OK).json({
             message: 'Notification sent',
@@ -591,7 +643,7 @@ export class UserController {
                 return;
             }
 
-            response.cookie('token', token, { secure: true });
+            response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
             response.status(HttpStatus.OK).json({
                 message: 'Login successful',
                 status: 'approved'

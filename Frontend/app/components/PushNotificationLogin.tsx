@@ -40,7 +40,6 @@ async function checkNotificationStatus(): Promise<StatusResponse> {
 
 export default function PushNotificationLogin() {
     const [email, setEmail] = useState<string>("");
-    const [rejectNotification, setRejectNotification] = useState<boolean>(false);
     const [notificationAuthCode, setNotificationAuthCode] = useState<string>();
     const [checkStatus, setCheckStatus] = useState<boolean>(false);
 
@@ -68,7 +67,8 @@ export default function PushNotificationLogin() {
     }
 
     if (checkNotificationLoginQuery.data?.status === "rejected") {
-        setRejectNotification(true);
+        alert("Login rejected by logined device");
+        window.location.href = "/login";
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,7 +77,6 @@ export default function PushNotificationLogin() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setRejectNotification(false); // Reset rejection state on new submission
         notificationMutation.mutate(email);
     };
 
@@ -111,10 +110,6 @@ export default function PushNotificationLogin() {
                 <p className="font-bold mt-4 text-black">
                     Auth Code: {notificationAuthCode}
                 </p>
-            )}
-
-            {rejectNotification && (
-                <p className="text-red-500 mt-4">Login request rejected. Please try again.</p>
             )}
 
             {checkNotificationLoginQuery.isFetching && <p>Checking notification status...</p>}
