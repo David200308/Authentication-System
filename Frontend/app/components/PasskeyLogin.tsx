@@ -12,7 +12,7 @@ interface PasskeyLoginRequestResponse {
 
 interface PasskeyLoginVerifyResponse {
     message: string;
-    veirfied?: boolean;
+    verified?: boolean;
 }
 
 async function requestPasskeyLogin(email: string): Promise<PasskeyLoginRequestResponse> {
@@ -86,7 +86,7 @@ export default function PasskeyLogin() {
         mutationFn: completePasskeyLogin,
         onSuccess: (data) => {
             console.log("Login Finish Success:", data);
-            if (!data.veirfied) {
+            if (!data.verified) {
                 alert("Passkey login failed");
                 navigate("/login");
                 return;

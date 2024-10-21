@@ -249,7 +249,9 @@ export class UserController {
             user: {
                 id: user.id,
                 email: user.email,
-                username: user.username
+                username: user.username,
+                mfaEnabled: user.mfaEnabled,
+                passkeyEnabled: user.passkeyEnabled,
             }
         });
     }

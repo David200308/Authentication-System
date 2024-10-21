@@ -10,6 +10,8 @@ interface User {
     id: string;
     username: string;
     email: string;
+    mfaEnabled: boolean;
+    passkeyEnabled: boolean;
 }
 
 interface Logs {
@@ -66,6 +68,8 @@ export default function Dashboard() {
         id: "",
         username: "",
         email: "",
+        mfaEnabled: false,
+        passkeyEnabled: false,
     });
     const [MFAOpen, setMFAOpen] = useState(false);
     const [passkeyOpen, setPasskeyOpen] = useState(false);
@@ -220,6 +224,7 @@ export default function Dashboard() {
                         <button
                             onClick={() => setMFAOpen(true)}
                             className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
+                            disabled={user.mfaEnabled}
                         >
                             Setup 2FA
                         </button>
@@ -230,6 +235,7 @@ export default function Dashboard() {
                         <button
                             onClick={() => setPasskeyOpen(true)}
                             className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
+                            disabled={user.passkeyEnabled}
                         >
                             Setup Passkey
                         </button>
