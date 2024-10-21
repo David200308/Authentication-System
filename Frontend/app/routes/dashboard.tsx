@@ -4,6 +4,7 @@ import { Setup2FADialog } from "~/components/Setup2FADialog";
 import QrScanner from "qr-scanner";
 import { useNavigate } from "@remix-run/react";
 import { useQuery } from "@tanstack/react-query";
+import { SetupPasskeyDialog } from "../components/SetupPasskeyDialog";
 
 interface User {
     id: string;
@@ -213,13 +214,26 @@ export default function Dashboard() {
                     <p className="text-lg mt-2">
                         <span className="font-medium">Email:</span> {user.email}
                     </p>
-                    <button
-                        onClick={() => setOpen(true)}
-                        className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
-                    >
-                        Setup 2FA
-                    </button>
-                    <Setup2FADialog open={open} closeDialog={() => setOpen(false)} />
+
+                    <div>
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
+                        >
+                            Setup 2FA
+                        </button>
+                        <Setup2FADialog open={open} closeDialog={() => setOpen(false)} />
+                    </div>
+                    
+                    <div className="mt-2">
+                        <button
+                            onClick={() => setOpen(true)}
+                            className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
+                        >
+                            Setup Passkey
+                        </button>
+                        <SetupPasskeyDialog open={open} closeDialog={() => setOpen(false)} />
+                    </div>
 
                     <div>
                         {scannerOpen && (

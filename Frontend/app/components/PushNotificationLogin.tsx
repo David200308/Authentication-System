@@ -82,8 +82,7 @@ export default function PushNotificationLogin() {
 
     return (
         <div className="text-black">
-            <p>Login via Notification</p>
-            <p className="mt-4">A login notification will be sent to your device.</p>
+            <p className="mb-2">Login via Push Notification</p>
 
             <Form method="post" className="space-y-4" onSubmit={handleSubmit}>
                 <input

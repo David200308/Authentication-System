@@ -73,7 +73,6 @@ export type Logs = {
 export type CreatePasskeyRequestBodySchema = {
     passkeyOptions: RegistrationResponseJSON;
     challenge: string;
-    transports: string;
 }
 
 export type PasskeyLoginRequestBodySchema = {
