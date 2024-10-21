@@ -8,7 +8,6 @@ interface SetupPasskeyDialogProps {
 }
 
 export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProps) {
-  const [username, setUsername] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [isError, setIsError] = useState<boolean>(false);
 
@@ -71,14 +70,6 @@ export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProp
             <p className="text-gray-700">
               Set up a passkey for enhanced security. You can use biometrics like Face ID, Touch ID, or a security key.
             </p>
-
-            <input
-              type="text"
-              placeholder="Enter username"
-              className="px-4 py-2 border w-full rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
 
             {message && (
               <p className={isError ? 'text-red-500' : 'text-green-500'}>{message}</p>
