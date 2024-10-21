@@ -31,7 +31,9 @@ export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProp
       }
 
       const challenge: string = res.challenge;
-      const attestationResponse = await startRegistration(res.passkeyOptions);
+      const attestationResponse = await startRegistration({
+        optionsJSON: res.passkeyOptions
+      });
 
       const verificationResponse = await fetch('/api/user/request/passkey/enroll', {
         method: 'POST',
