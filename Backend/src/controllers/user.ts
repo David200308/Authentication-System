@@ -834,6 +834,26 @@ export class UserController {
                 return;
             }
 
+            const res = await this.userService.enablePasskey(user.id);
+            if (!res) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Enable passkey failed'
+                });
+                return;
+            }
+
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id, 
+                content:`Passkey was enabled & created`
+            });
+    
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+
             response.status(HttpStatus.OK).json({
                 message: 'Create passkey successful',
                 verified: true

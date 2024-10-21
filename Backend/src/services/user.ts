@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { 
     ADD_DEVICE_COUNT_SQL,
     CREATE_USER_SQL, 
+    ENABLE_PASSKEY_SQL, 
     GET_USER_BY_EMAIL_SQL,
     GET_USER_BY_ID_SQL,
     GET_USER_BY_NAME_SQL,
@@ -199,6 +200,16 @@ export class UserServices {
             return result;
         } catch (error) {
             throw new Error(error);
+        }
+    };
+
+    enablePasskey = async (userId: number) => {
+        try {
+            const sql = ENABLE_PASSKEY_SQL;
+            await connection.promise().query(sql, userId);
+            return true;
+        } catch (error) {
+            return false;
         }
     };
 

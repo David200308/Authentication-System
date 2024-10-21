@@ -9,3 +9,7 @@ export const GET_USER_BY_ID_SQL = 'SELECT * FROM users WHERE id = ?';
 export const ADD_DEVICE_COUNT_SQL = 'UPDATE users SET loginDeviceCount = loginDeviceCount + 1 WHERE id = ?';
 
 export const REMOVE_DEVICE_COUNT_SQL = 'UPDATE users SET loginDeviceCount = loginDeviceCount - 1 WHERE id = ?';
+
+export const ENABLE_MFA_SQL = 'UPDATE users SET mfaEnabled = 1 WHERE id = ?';
+
+export const ENABLE_PASSKEY_SQL = 'UPDATE users SET passkeyEnabled = 1 WHERE id = ?';
