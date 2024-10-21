@@ -21,6 +21,7 @@ import {
     getIPDeviiceNameLocation, 
     rpName,
     rpID,
+    origin,
     intToUint8Array,
     uint8ArrayToBase64
 } from '../utils/auth';
@@ -734,8 +735,8 @@ export class UserController {
         }
 
         const passkeyOptions = await generateRegistrationOptions({
-            rpName,
-            rpID,
+            rpName: rpName(),
+            rpID: rpID(),
             userID: intToUint8Array(user.id),
             userName: user.username,
             timeout: 60000,
@@ -806,8 +807,8 @@ export class UserController {
         const verification = await verifyRegistrationResponse({
             response: data.passkeyOptions,
             expectedChallenge: data.challenge,
-            expectedOrigin: origin,
-            expectedRPID: rpID,
+            expectedOrigin: origin(),
+            expectedRPID: rpID(),
             requireUserVerification: true,
         });
 
@@ -860,7 +861,7 @@ export class UserController {
             timeout: 60000,
             allowCredentials: [],
             userVerification: 'required',
-            rpID,
+            rpID: rpID(),
         });
         if (!passkeyOptions) {
             response.status(HttpStatus.BAD_REQUEST).json({
@@ -954,8 +955,8 @@ export class UserController {
         const opts: VerifyAuthenticationResponseOpts = {
             response: data.passkeyOptions,
             expectedChallenge: payload.passkeyOptionsChallenge,
-            expectedOrigin: origin,
-            expectedRPID: rpID,
+            expectedOrigin: origin(),
+            expectedRPID: rpID(),
             credential: passkeyInfoOpts,
         };
 

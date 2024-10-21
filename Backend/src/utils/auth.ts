@@ -75,9 +75,9 @@ export async function getIPDeviiceNameLocation(request: Request) {
     return { loginIpAddress, device, location };
 }
 
-export const rpName: string = process.env.PASSKEY_RPNAME;
-export const rpID: string = process.env.PASSKEY_RPID;
-export const origin: string = process.env.PASSKEY_ORIGIN;
+export const rpName = (): string => { return process.env.PASSKEY_RPNAME; };
+export const rpID = (): string => { return process.env.PASSKEY_RPID; };
+export const origin = (): string => { return process.env.PASSKEY_ORIGIN; };
 
 export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string =>
     Buffer.from(uint8Array).toString('base64');
