@@ -30,6 +30,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
+    "express-basic-auth": "^1.2.1",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.10.1",
     "reflect-metadata": "^0.2.0",
