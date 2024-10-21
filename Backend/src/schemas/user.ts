@@ -1,4 +1,4 @@
-import { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
+import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 
 export type User = {
     id: number;
@@ -73,10 +73,6 @@ export type Logs = {
 export type CreatePasskeyRequestBodySchema = {
     passkeyOptions: RegistrationResponseJSON;
     challenge: string;
-}
-
-export type PasskeyLoginRequestBodySchema = {
-    passkeyOptions: AuthenticationResponseJSON;
 }
 
 export type CreatePasskeySchema = {

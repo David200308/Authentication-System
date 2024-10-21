@@ -5,7 +5,6 @@ import { generateAuthenticationOptions, generateRegistrationOptions, VerifiedAut
 import { JwtPayload } from 'jsonwebtoken';
 import { 
     CreatePasskeyRequestBodySchema,
-    PasskeyLoginRequestBodySchema,
     PasswordSignInSchema, 
     SignUpSchema, 
     UpdateNotificationLoginBodySchema 
@@ -25,6 +24,7 @@ import {
     intToUint8Array,
     uint8ArrayToBase64
 } from '../utils/auth';
+import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 
 @Controller("user")
 export class UserController {
@@ -888,7 +888,7 @@ export class UserController {
     }
 
     @Post('login/passkey/verify')
-    async loginByPasskeyVerify(@Body() data: PasskeyLoginRequestBodySchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    async loginByPasskeyVerify(@Body() data: AuthenticationResponseJSON, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized',
@@ -935,7 +935,7 @@ export class UserController {
             return;
         }
 
-        const passkeyUid = data.passkeyOptions.id;
+        const passkeyUid = data.id;
         const passkeyInfo = await this.userService.getPasskeyByPasskeyUid(passkeyUid);
 
         if (!passkeyInfo) {
@@ -953,7 +953,7 @@ export class UserController {
         }
 
         const opts: VerifyAuthenticationResponseOpts = {
-            response: data.passkeyOptions,
+            response: data,
             expectedChallenge: payload.passkeyOptionsChallenge,
             expectedOrigin: origin(),
             expectedRPID: rpID(),
