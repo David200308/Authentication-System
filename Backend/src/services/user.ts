@@ -1,5 +1,5 @@
 import { connection } from "../database/database";
-import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordType } from "../schemas/user";
+import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
 import { 
     ADD_DEVICE_COUNT_SQL,
@@ -19,6 +19,8 @@ import {
 } from "../database/sql/notification";
 import { CREATE_LOG_SQL, GET_LOGS_BY_USERID } from "../database/sql/logs";
 import { CREATE_AUTH_SQL } from "../database/sql/auth";
+import { CREATE_PASSKEY_SQL, GET_PASSKEY_BY_PASSKEY_UID_SQL, UPDATE_PASSKEY_COUNT_SQL } from "../database/sql/passkey";
+import { base64ToUint8Array } from "../utils/auth";
 
 @Injectable()
 export class UserServices {
@@ -86,7 +88,7 @@ export class UserServices {
         }
     }
 
-    createAuthRecord = async (data: CreateAuthRecordType) => {
+    createAuthRecord = async (data: CreateAuthRecordSchema) => {
         const sql = CREATE_AUTH_SQL;
         const [result] = await connection.promise().query(sql, data);
         return result;
@@ -160,6 +162,40 @@ export class UserServices {
         try {
             const sql = UPDATE_ALEADY_USED_NOTIFICATION_SQL;
             const [result] = await connection.promise().query(sql, notification_uuid);
+            return result;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
+    createPasskey = async (data: CreatePasskeySchema) => {
+        const sql = CREATE_PASSKEY_SQL;
+        const [result] = await connection.promise().query(sql, data);
+        return result;
+    };
+
+    getPasskeyByPasskeyUid = async (passkeyUid : string) => {
+        try {
+            const sql = GET_PASSKEY_BY_PASSKEY_UID_SQL;
+            const [rows] = await connection.promise().query(sql, passkeyUid);
+            const data = rows[0];
+            return {
+                userID: data.user_id,
+                credentialID: data.passkey_uid,
+                credentialPublicKey: base64ToUint8Array(data.public_key),
+                counter: data.counter,
+                transports: data.transports ? data.transports.split(',') : [],
+            };
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    };
+
+    updatePasskeyCounter = async (passkeyUid: string, counter: number) => {
+        try {
+            const sql = UPDATE_PASSKEY_COUNT_SQL;
+            const [result] = await connection.promise().query(sql, [counter, passkeyUid]);
             return result;
         } catch (error) {
             throw new Error(error);

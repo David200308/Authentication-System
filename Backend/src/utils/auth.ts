@@ -74,3 +74,22 @@ export async function getIPDeviiceNameLocation(request: Request) {
 
     return { loginIpAddress, device, location };
 }
+
+export const rpName: string = process.env.PASSKEY_RPNAME;
+export const rpID: string = process.env.PASSKEY_RPID;
+export const origin: string = process.env.PASSKEY_ORIGIN;
+
+export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string =>
+    Buffer.from(uint8Array).toString('base64');
+ 
+export const base64ToUint8Array = (base64: string): Uint8Array =>
+    new Uint8Array(Buffer.from(base64, 'base64'));
+
+export const intToUint8Array = (num: number): Uint8Array => {
+    const buffer = new ArrayBuffer(4);
+    new DataView(buffer).setUint32(0, num);
+    return new Uint8Array(buffer);
+}
+
+export const uint8ArrayToInt = (uint8Array: Uint8Array): number =>
+    new DataView(uint8Array.buffer).getUint32(0);

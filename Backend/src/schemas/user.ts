@@ -1,3 +1,5 @@
+import { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
+
 export type User = {
     id: number;
     username: string;
@@ -7,31 +9,30 @@ export type User = {
     updateAt: Date;
     loginDeviceCount: number;
     latestLoginAt: Date;
-    MFAEnabled: boolean;
-    MFAKey: string;
-    auths: Auth[];
-}
+    mfaEnabled: boolean;
+    passkeyEnabled: boolean;
+};
 
-// loginMethod: general, qr, notification
+// loginMethod: general, qr, notification, passkey
 export type Auth = {
     auth_id: number;
     auth_uuid: string;
     user_id: number;
     loginAt: Date;
     ipAddress: string;
-    loginMethod: "general" | "qr" | "notification";
+    loginMethod: "general" | "qr" | "notification" | "passkey";
     loginDeviceName: string;
     loginLocation: string;
     notificationId?: string;
     qrId?: string;
 };
 
-// loginMethod: general, qr, notification
-export type CreateAuthRecordType = {
+// loginMethod: general, qr, notification, passkey
+export type CreateAuthRecordSchema = {
     auth_uuid: string;
     user_id: number;
     ipAddress: string;
-    loginMethod: "general" | "qr" | "notification";
+    loginMethod: "general" | "qr" | "notification" | "passkey";
     loginDeviceName: string;
     loginLocation: string;
     notificationId?: string;
@@ -52,11 +53,39 @@ export type Notification = {
     alreadyUsed: boolean;
 };
 
+export type Passkey = {
+    passkey_id: number;
+    user_id: number;
+    passkey_uid: string;
+    public_key: string;
+    counter: number;
+    transports: string;
+    createdAt: Date;
+};
+
 export type Logs = {
     log_id: number,
     user_id: number,
     log_time: Date,
     content: string
+}
+
+export type CreatePasskeyRequestBodySchema = {
+    passkeyOptions: RegistrationResponseJSON;
+    challenge: string;
+    transports: string;
+}
+
+export type PasskeyLoginRequestBodySchema = {
+    passkeyOptions: AuthenticationResponseJSON;
+}
+
+export type CreatePasskeySchema = {
+    user_id: number;
+    passkey_uid: string;
+    public_key: string;
+    counter: number;
+    transports: string;
 }
 
 export type CreateLogSchema = {

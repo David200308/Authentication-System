@@ -10,11 +10,17 @@ CREATE TABLE IF NOT EXISTS users (
     updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     loginDeviceCount INTEGER NOT NULL DEFAULT 0,
     latestLoginAt TIMESTAMP,
-    MFAEnabled BOOLEAN,
-    MFAKey VARCHAR(255)
+    mfaEnabled BOOLEAN,
+    passkeyEnabled BOOLEAN
 );
 
--- loginMethod: general, qr, notification
+CREATE TABLE IF NOT EXISTS mfa (
+    user_id INTEGER PRIMARY KEY,
+    mfa_key VARCHAR(255) NOT NULL,
+    enableAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- loginMethod: general, qr, notification, passkey
 CREATE TABLE IF NOT EXISTS auth (
     auth_id INTEGER PRIMARY KEY AUTO_INCREMENT,
     auth_uuid VARCHAR(255) NOT NULL,
@@ -41,6 +47,16 @@ CREATE TABLE IF NOT EXISTS notifications (
     receiverActionAt TIMESTAMP,
     authCode VARCHAR(255) NOT NULL,
     alreadyUsed BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS passkey (
+    passkey_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    user_id INTEGER NOT NULL,
+    passkey_uid VARCHAR(255) NOT NULL,
+    public_key VARCHAR(255) NOT NULL,
+    counter INT NOT NULL,
+    transports VARCHAR(255),
+    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS qr (

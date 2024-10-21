@@ -1,8 +1,11 @@
 import { Body, Controller, Get, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { UserServices } from '../services/user';
 import { Response, Request } from 'express';
+import { generateAuthenticationOptions, generateRegistrationOptions, VerifiedAuthenticationResponse, verifyAuthenticationResponse, VerifyAuthenticationResponseOpts, verifyRegistrationResponse } from '@simplewebauthn/server';
 import { JwtPayload } from 'jsonwebtoken';
 import { 
+    CreatePasskeyRequestBodySchema,
+    PasskeyLoginRequestBodySchema,
     PasswordSignInSchema, 
     SignUpSchema, 
     UpdateNotificationLoginBodySchema 
@@ -15,13 +18,18 @@ import {
     validateEmail, 
     generateUuid, 
     generateRandom6Digits, 
-    getIPDeviiceNameLocation 
+    getIPDeviiceNameLocation, 
+    rpName,
+    rpID,
+    intToUint8Array,
+    uint8ArrayToBase64
 } from '../utils/auth';
 
 @Controller("user")
 export class UserController {
     constructor(private readonly userService: UserServices) { }
 
+    // Get user info
     @Get()
     async getUser(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
@@ -75,6 +83,7 @@ export class UserController {
         });
     }
 
+    // Password register
     @Post('register')
     async createUser(@Body() data: SignUpSchema, @Res({ passthrough: true }) response: Response) {
         if (!data.email || !data.password || !data.username) {
@@ -111,6 +120,7 @@ export class UserController {
         });
     }
 
+    // Password login
     @Post('login/password')
     async login(@Body() data: PasswordSignInSchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         const user = await this.userService.getUserByEmail(data.email);
@@ -182,6 +192,7 @@ export class UserController {
         });
     }
 
+    // token verification
     @Post('token')
     async verifyToken(@Body() data: { type: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
@@ -242,6 +253,7 @@ export class UserController {
         });
     }
 
+    // 2FA
     @Post('mfa')
     async mfa(@Body() data: { code: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
@@ -293,6 +305,7 @@ export class UserController {
 
     }
 
+    // Logs
     @Get('logs')
     async getLogs(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
@@ -339,6 +352,7 @@ export class UserController {
         response.status(HttpStatus.OK).json(data);
     }
 
+    // Notification login
     @Post('login/notification')
     async loginWithNotification(@Body() data: { email: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!data.email) {
@@ -677,4 +691,343 @@ export class UserController {
         });
     }
 
+    // Passkey login
+    @Post('request/passkey/enable')
+    async requestPasskeyEnable(@Body() data: { rPasskey: boolean }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data.rPasskey && data.rPasskey !== false) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Request passkey is required'
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserById(parseInt(payload.aud));
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        const passkeyOptions = await generateRegistrationOptions({
+            rpName,
+            rpID,
+            userID: intToUint8Array(user.id),
+            userName: user.username,
+            timeout: 60000,
+            attestationType: 'direct',
+            excludeCredentials: [],
+            authenticatorSelection: {
+                residentKey: 'preferred',
+            },
+            supportedAlgorithmIDs: [-7, -257],
+        });
+        if (!passkeyOptions) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Request passkey failed',
+                status: false
+            });
+            return;
+        }
+
+        response.status(HttpStatus.OK).json({
+            message: "Request passkey successful",
+            status: true,
+            passkeyOptions,
+            challenge: passkeyOptions.challenge,
+        });
+    }
+
+    @Post('request/passkey/enroll')
+    async requestPasskeyEnroll(@Body() data: CreatePasskeyRequestBodySchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'missing body data'
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserById(parseInt(payload.aud));
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        const verification = await verifyRegistrationResponse({
+            response: data.passkeyOptions,
+            expectedChallenge: data.challenge,
+            expectedOrigin: origin,
+            expectedRPID: rpID,
+            requireUserVerification: true,
+        });
+
+        if (verification.verified && verification.registrationInfo) { 
+            const credentialPublicKey = verification.registrationInfo.credential.publicKey;
+            const credentialID = verification.registrationInfo.credential.id;
+            const counter = verification.registrationInfo.credential.counter;
+            const transports = verification.registrationInfo.credential.transports;
+
+            const createPasskeyData = {
+                user_id: user.id,
+                passkey_uid: credentialID,
+                public_key: uint8ArrayToBase64(credentialPublicKey),
+                counter,
+                transports: transports.join(','),
+            };
+
+            const result = await this.userService.createPasskey(createPasskeyData);
+            if (!result) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create passkey failed'
+                });
+                return;
+            }
+
+            response.status(HttpStatus.OK).json({
+                message: 'Create passkey successful',
+                verified: true
+            });
+            return;
+        }
+
+        response.status(HttpStatus.BAD_REQUEST).json({
+            message: 'Verification failed',
+            verified: false
+        });
+    }
+
+    @Post('login/passkey/request')
+    async loginByPasskeyRequest(@Body() data: { email: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!data.email) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Email is required'
+            });
+            return;
+        }
+        const email = data.email;
+
+        const passkeyOptions = await generateAuthenticationOptions({
+            timeout: 60000,
+            allowCredentials: [],
+            userVerification: 'required',
+            rpID,
+        });
+        if (!passkeyOptions) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Request passkey failed',
+                status: false
+            });
+            return;
+        }
+
+        const payload = {
+            email,
+            passkeyOptionsChallenge: passkeyOptions.challenge,
+            usage: 'passkey login verification'
+        };
+
+        const token = generateToken(payload, true);
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
+
+        response.status(HttpStatus.OK).json({
+            message: "Request passkey successful",
+            status: true,
+            passkeyOptions,
+        });
+    }
+
+    @Post('login/passkey/verify')
+    async loginByPasskeyVerify(@Body() data: PasskeyLoginRequestBodySchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object") {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (payload.usage !== 'passkey login verification') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token usage'
+            });
+            return; 
+        }
+
+        if (!data) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'missing body data'
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserByEmail(payload.email);
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        const passkeyUid = data.passkeyOptions.id;
+        const passkeyInfo = await this.userService.getPasskeyByPasskeyUid(passkeyUid);
+
+        if (!passkeyInfo) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'Passkey not found'
+            });
+            return;
+        }
+
+        const passkeyInfoOpts = {
+            id: passkeyInfo.credentialID,
+            publicKey: passkeyInfo.credentialPublicKey,
+            counter: passkeyInfo.counter,
+            transports: passkeyInfo.transports,
+        }
+
+        const opts: VerifyAuthenticationResponseOpts = {
+            response: data.passkeyOptions,
+            expectedChallenge: payload.passkeyOptionsChallenge,
+            expectedOrigin: origin,
+            expectedRPID: rpID,
+            credential: passkeyInfoOpts,
+        };
+
+        const verification:VerifiedAuthenticationResponse = await verifyAuthenticationResponse(opts);
+        const { verified, authenticationInfo } = verification;
+
+        if (!verified) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Verification failed',
+                verified: false
+            });
+            return;
+        }
+
+        await this.userService.updatePasskeyCounter(passkeyUid, authenticationInfo.newCounter);
+        const authuuid = generateUuid();
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+
+        const payloadAuth = {
+            aud: user.id.toString(),
+            email: user.email,
+            username: user.username,
+            authuuid,
+            location,
+            ipaddress: loginIpAddress,
+            device,
+        };
+
+        const tokenAuth = generateToken(payloadAuth, false);
+
+        const createAuthRes = await this.userService.createAuthRecord({
+            auth_uuid: authuuid,
+            user_id: user.id,
+            ipAddress: loginIpAddress,
+            loginMethod: 'passkey',
+            loginDeviceName: device,
+            loginLocation: location
+        });
+
+        if (!createAuthRes) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create Auth Record failed'
+            });
+            return;
+        }
+
+        const createLogResult = await this.userService.createLog({
+            user_id: user.id, 
+            content:`Login via passkey in ${location} use ${device}`
+        });
+
+        if (!createLogResult) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create log failed'
+            });
+            return;
+        }
+
+        const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
+
+        if (!updateDeviceCount) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Update device count failed'
+            });
+            return;
+        }
+
+        response.cookie('token', tokenAuth, { secure: true, httpOnly: true, sameSite: 'strict' });
+        response.status(HttpStatus.OK).json({
+            message: 'Login successful',
+            verified: true
+        });
+    }
+    
 }
