@@ -67,7 +67,8 @@ export default function Dashboard() {
         username: "",
         email: "",
     });
-    const [open, setOpen] = useState(false);
+    const [MFAOpen, setMFAOpen] = useState(false);
+    const [passkeyOpen, setPasskeyOpen] = useState(false);
     const [qrScanResult, setQrScanResult] = useState<string | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const qrScannerRef = useRef<QrScanner | null>(null);
@@ -217,22 +218,22 @@ export default function Dashboard() {
 
                     <div>
                         <button
-                            onClick={() => setOpen(true)}
+                            onClick={() => setMFAOpen(true)}
                             className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
                         >
                             Setup 2FA
                         </button>
-                        <Setup2FADialog open={open} closeDialog={() => setOpen(false)} />
+                        <Setup2FADialog open={MFAOpen} closeDialog={() => setMFAOpen(false)} />
                     </div>
                     
                     <div className="mt-2">
                         <button
-                            onClick={() => setOpen(true)}
+                            onClick={() => setPasskeyOpen(true)}
                             className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
                         >
                             Setup Passkey
                         </button>
-                        <SetupPasskeyDialog open={open} closeDialog={() => setOpen(false)} />
+                        <SetupPasskeyDialog open={passkeyOpen} closeDialog={() => setPasskeyOpen(false)} />
                     </div>
 
                     <div>
