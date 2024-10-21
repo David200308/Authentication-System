@@ -6,6 +6,7 @@
 - Token Authentication (JWT Token - ES256 Algorithm)
 - QR Code Authentication
 - Notification Authentication
+- Passkey Authentication
 
 ## Tech Stack
 
