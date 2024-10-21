@@ -12,6 +12,7 @@ const proxyRequest = (request: Request) => {
   
   headers.set('Host', ORIGIN.split('//')[1]);
   headers.set('x-forwarded-for', ip || '');
+  headers.set('origin', ORIGIN);
   
   return new Request(href, {
     method: request.method,

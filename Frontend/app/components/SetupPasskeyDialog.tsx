@@ -61,10 +61,8 @@ export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProp
 
   return (
     <Dialog open={open} onClose={closeDialog} className="relative z-50 text-black">
-      {/* Background overlay */}
       <div className="fixed inset-0 bg-black bg-opacity-30" aria-hidden="true"></div>
 
-      {/* Centered panel */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel className="max-w-lg space-y-6 border bg-white p-12 rounded-md shadow-md">
           <DialogTitle className="font-bold text-2xl">Setup Passkey</DialogTitle>
