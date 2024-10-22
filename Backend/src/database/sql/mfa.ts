@@ -8,6 +8,8 @@
 
 export const CREATE_MFA_SQL = 'INSERT INTO mfa SET ?';
 
+export const GET_MFA_BY_USER_ID_NOT_VERIFY_SQL = 'SELECT * FROM mfa WHERE user_id = ? AND initialSetup = FALSE ORDER BY enableAt DESC LIMIT 1';
+
 export const GET_MFA_BY_USER_ID_SQL = 'SELECT * FROM mfa WHERE user_id = ? AND initialSetup = TRUE';
 
 export const UPDATE_MFA_INITIAL_SETUP_SQL = 'UPDATE mfa SET initialSetup = TRUE WHERE user_id = ?';

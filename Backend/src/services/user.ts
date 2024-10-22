@@ -34,6 +34,7 @@ import {
 } from "../database/sql/auth";
 import { 
     CREATE_MFA_SQL, 
+    GET_MFA_BY_USER_ID_NOT_VERIFY_SQL, 
     GET_MFA_BY_USER_ID_SQL, 
     UPDATE_MFA_INITIAL_SETUP_SQL
 } from "../database/sql/mfa";
@@ -254,6 +255,17 @@ export class UserServices {
             return false;
         }
     };
+
+    getMFANotVerifyByUserId = async (userId: number) => {
+        try {
+            const sql = GET_MFA_BY_USER_ID_NOT_VERIFY_SQL;
+            const [rows] = await connection.promise().query(sql, userId);
+            const data = rows[0];
+            return data;
+        } catch (error) {
+            return null;
+        }
+    }
 
     getMFAByUserId = async (userId: number) => {
         try {

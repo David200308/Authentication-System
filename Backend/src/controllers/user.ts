@@ -375,10 +375,10 @@ export class UserController {
             return;
         }
 
-        const mfaInfo = await this.userService.getMFAByUserId(user.id);
+        const mfaInfo = await this.userService.getMFANotVerifyByUserId(user.id);
         if (!mfaInfo) {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'MFA not enabled for user'
+                message: 'MFA not create for this user'
             });
             return;
         }
