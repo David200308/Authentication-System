@@ -21,7 +21,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
     { rMfa: boolean }
   >({
     mutationFn: async () => {
-      const response = await fetch("/api/request/mfa/enable", {
+      const response = await fetch("/api/user/request/mfa/enable", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
     { code: string }
   >({
     mutationFn: async () => {
-      const response = await fetch("/api/request/mfa/verify", {
+      const response = await fetch("/api/user/request/mfa/verify", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
