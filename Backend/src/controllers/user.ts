@@ -206,6 +206,7 @@ export class UserController {
         response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
         response.status(HttpStatus.OK).json({
             message: 'Login successful',
+            mfaEnabled: user.mfaEnabled,
         });
     }
 
@@ -238,6 +239,14 @@ export class UserController {
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (payload.usage) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token',
+                usage: payload.usage
             });
             return;
         }

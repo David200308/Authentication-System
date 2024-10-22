@@ -9,7 +9,7 @@ interface LoginData {
 
 interface LoginResponse {
   message: string;
-  token: string;
+  mfaEnabled: boolean;
 }
 
 async function loginUser(data: LoginData): Promise<LoginResponse> {
@@ -38,6 +38,10 @@ export default function NormalLogin() {
     mutationFn: loginUser,
     onSuccess: (data: LoginResponse) => {
       console.log("User logged in successfully:", data);
+      if (data.mfaEnabled) {
+        window.location.href = "/verify-2fa";
+        return;
+      }
       window.location.href = "/dashboard";
     },
     onError: (error: Error) => {
