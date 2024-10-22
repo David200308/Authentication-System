@@ -3,6 +3,7 @@
 ## Authentication Methods
 
 - Password Authentication
+- 2FA (TOTP) (Optional)
 - Token Authentication (JWT Token - ES256 Algorithm)
 - QR Code Authentication
 - Notification Authentication

@@ -1,3 +1,16 @@
+// CREATE TABLE IF NOT EXISTS users (
+//     id INTEGER PRIMARY KEY AUTO_INCREMENT,
+//     username VARCHAR(255) NOT NULL,
+//     email VARCHAR(255) NOT NULL,
+//     password VARCHAR(255),
+//     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+//     updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+//     loginDeviceCount INTEGER NOT NULL DEFAULT 0,
+//     latestLoginAt TIMESTAMP,
+//     mfaEnabled BOOLEAN,
+//     passkeyEnabled BOOLEAN
+// );
+
 export const CREATE_USER_SQL = 'INSERT INTO users SET ?';
 
 export const GET_USER_BY_EMAIL_SQL = 'SELECT * FROM users WHERE email = ?';

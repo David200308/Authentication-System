@@ -3,21 +3,21 @@ import { UserServices } from '../services/user';
 import { Response, Request } from 'express';
 import { generateAuthenticationOptions, generateRegistrationOptions, VerifiedAuthenticationResponse, verifyAuthenticationResponse, VerifyAuthenticationResponseOpts, verifyRegistrationResponse } from '@simplewebauthn/server';
 import { JwtPayload } from 'jsonwebtoken';
-import { 
+import {
     CreatePasskeyRequestBodySchema,
-    PasswordSignInSchema, 
-    SignUpSchema, 
-    UpdateNotificationLoginBodySchema 
+    PasswordSignInSchema,
+    SignUpSchema,
+    UpdateNotificationLoginBodySchema
 } from '../schemas/user';
-import { 
-    generateToken, 
-    passwordHash, 
-    passwordVerify, 
-    verifyToken, 
-    validateEmail, 
-    generateUuid, 
-    generateRandom6Digits, 
-    getIPDeviiceNameLocation, 
+import {
+    generateToken,
+    passwordHash,
+    passwordVerify,
+    verifyToken,
+    validateEmail,
+    generateUuid,
+    generateRandom6Digits,
+    getIPDeviiceNameLocation,
     rpName,
     rpID,
     origin,
@@ -25,6 +25,8 @@ import {
     uint8ArrayToBase64
 } from '../utils/auth';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
+import * as speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 
 @Controller("user")
 export class UserController {
@@ -151,45 +153,60 @@ export class UserController {
             device,
         };
 
-        const token = generateToken(payload, false);
+        const needMFAPayload = {
+            aud: user.id.toString(),
+            email: user.email,
+            username: user.username,
+            location,
+            ipaddress: loginIpAddress,
+            device,
+            usage: 'mfa verification'
+        };
 
-        const createAuthRes = await this.userService.createAuthRecord({
-            auth_uuid: authuuid,
-            user_id: user.id,
-            ipAddress: loginIpAddress,
-            loginMethod: 'general',
-            loginDeviceName: device,
-            loginLocation: location
-        });
-        if (!createAuthRes) {
-            response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Create Auth Record failed'
-            });
-            return;
-        }
+        const token = generateToken(
+            user.mfaEnabled ? needMFAPayload : payload,
+            user.mfaEnabled ? true : false
+        );
 
-        const createLogResult = await this.userService.createLog({
-            user_id: user.id, 
-            content:`Login via password in ${location} use ${device}`
-        });
-        if (!createLogResult) {
-            response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Create log failed'
+        if (!user.mfaEnabled) {
+            const createAuthRes = await this.userService.createAuthRecord({
+                auth_uuid: authuuid,
+                user_id: user.id,
+                ipAddress: loginIpAddress,
+                loginMethod: 'general',
+                loginDeviceName: device,
+                loginLocation: location
             });
-            return;
-        }
+            if (!createAuthRes) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create Auth Record failed'
+                });
+                return;
+            }
 
-        const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
-        if (!updateDeviceCount) {
-            response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Update device count failed'
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id,
+                content: `Login via password in ${location} use ${device}`
             });
-            return;
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+
+            const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
+            if (!updateDeviceCount) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update device count failed'
+                });
+                return;
+            }
         }
 
         response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
         response.status(HttpStatus.OK).json({
-            message: 'Login successful', 
+            message: 'Login successful',
         });
     }
 
@@ -257,8 +274,8 @@ export class UserController {
     }
 
     // 2FA
-    @Post('mfa')
-    async mfa(@Body() data: { code: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+    @Post('request/mfa/enable')
+    async requestEnableMFA(@Body() data: { rMfa: boolean }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
@@ -266,9 +283,9 @@ export class UserController {
             return;
         }
 
-        if (!data.code) {
+        if (!data.rMfa && data.rMfa !== false) {
             response.status(HttpStatus.BAD_REQUEST).json({
-                message: 'Code is required'
+                message: 'Request mfa is required'
             });
             return;
         }
@@ -282,14 +299,13 @@ export class UserController {
             return;
         });
 
-        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+        if (typeof payload !== 'object' || !(typeof payload.aud === 'string')) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
             });
             return;
         }
 
-        // compare ipaddress, location, device to detect token hijacking
         const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
         if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
             response.status(HttpStatus.UNAUTHORIZED).json({
@@ -306,6 +322,216 @@ export class UserController {
             return;
         }
 
+        const secret = speakeasy.generateSecret({
+            name: `COMP4334 Auth System (${user.email})`,
+            length: 32
+        });
+
+        const res = await this.userService.createMFA(user.id, secret.base32);
+        if (!res) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create MFA failed'
+            });
+            return;
+        }
+
+        const qrCodeDataURL = await qrcode.toDataURL(secret.otpauth_url);
+
+        response.json({
+            message: 'MFA enabled',
+            status: true,
+            qrCode: qrCodeDataURL,
+            secret: secret.base32
+        });
+    }
+
+    @Post('request/mfa/verify')
+    async requestVerifyMFA(@Body() data: { code: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const payload: JwtPayload | void = await verifyToken(request.cookies.token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== 'object' || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserById(parseInt(payload.aud));
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        const mfaInfo = await this.userService.getMFAByUserId(user.id);
+        if (!mfaInfo) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'MFA not enabled for user'
+            });
+            return;
+        }
+
+        const verified = speakeasy.totp.verify({
+            secret: mfaInfo.mfa_key,
+            encoding: 'base32',
+            token: data.code
+        });
+
+        if (!verified) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Invalid MFA code',
+                status: false
+            });
+            return;
+        }
+
+        const res = await this.userService.enableMFA(user.id);
+        if (!res) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Enable MFA failed',
+                status: false
+            });
+            return;
+        }
+
+        response.json({
+            message: 'MFA enabled successfully',
+            status: true
+        });
+    };
+
+    @Post('mfa/verify')
+    async verifyMFA(@Body() data: { code: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const payload: JwtPayload | void = await verifyToken(request.cookies.token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== 'object' || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (payload.usage !== 'mfa verification') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token usage'
+            });
+            return;
+        }
+
+        const mfaInfo = await this.userService.getMFAByUserId(parseInt(payload.aud));
+        if (!mfaInfo) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'MFA not enabled for user'
+            });
+            return;
+        }
+
+        const userSecret = mfaInfo.mfa_key;
+        const verified = speakeasy.totp.verify({
+            secret: userSecret,
+            encoding: 'base32',
+            token: data.code
+        });
+
+        if (!verified) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Invalid MFA code',
+                status: false
+            });
+            return;
+        }
+
+        const user = await this.userService.getUserById(parseInt(payload.aud));
+        if (!user) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'User not found'
+            });
+            return;
+        }
+
+        const authuuid = generateUuid();
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+
+        const loginPayload = {
+            aud: user.id.toString(),
+            email: user.email,
+            username: user.username,
+            authuuid,
+            location,
+            ipaddress: loginIpAddress,
+            device,
+        };
+
+        const token = generateToken(loginPayload, false);
+
+        const createAuthRes = await this.userService.createAuthRecord({
+            auth_uuid: authuuid,
+            user_id: user.id,
+            ipAddress: loginIpAddress,
+            loginMethod: 'general',
+            loginDeviceName: device,
+            loginLocation: location
+        });
+        if (!createAuthRes) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create Auth Record failed'
+            });
+            return;
+        }
+
+        const createLogResult = await this.userService.createLog({
+            user_id: user.id,
+            content: `Login via password in ${location} use ${device}`
+        });
+        if (!createLogResult) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create log failed'
+            });
+            return;
+        }
+
+        const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
+        if (!updateDeviceCount) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Update device count failed'
+            });
+            return;
+        }
+
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
+        response.json({
+            message: 'MFA verified successfully',
+            status: true
+        });
     }
 
     // Logs
@@ -378,12 +604,12 @@ export class UserController {
             });
             return;
         }
-        
+
         const notification_uuid = generateUuid();
         const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
         const authCode = generateRandom6Digits();
         const authCodeHash = await passwordHash(authCode.toString());
-        
+
         const result = await this.userService.createLoginNotification(user.id, notification_uuid, device, location, loginIpAddress, authCodeHash);
         if (!result) {
             response.status(HttpStatus.BAD_REQUEST).json({
@@ -403,7 +629,7 @@ export class UserController {
 
         const token = generateToken(payload, true);
         response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
-        
+
         response.status(HttpStatus.OK).json({
             message: 'Notification sent',
             notification_uuid,
@@ -412,7 +638,7 @@ export class UserController {
     }
 
     @Get('login/notification')
-    async getLoginNotification(@Req() request: Request , @Res({ passthrough: true }) response: Response) {
+    async getLoginNotification(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized',
@@ -521,7 +747,7 @@ export class UserController {
                 response.status(HttpStatus.OK).json({
                     message: 'Login allowed'
                 });
-                
+
                 break;
             case 'rejected':
                 // update notification in database
@@ -574,7 +800,7 @@ export class UserController {
             response.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Invalid token usage'
             });
-            return; 
+            return;
         }
 
         const notification_uuid = payload.notification_uuid;
@@ -633,8 +859,8 @@ export class UserController {
             }
 
             const createLogResult = await this.userService.createLog({
-                user_id: user.id, 
-                content:`Login via sent notification in ${location} use ${device}`
+                user_id: user.id,
+                content: `Login via sent notification in ${location} use ${device}`
             });
             if (!createLogResult) {
                 response.status(HttpStatus.BAD_REQUEST).json({
@@ -667,8 +893,8 @@ export class UserController {
             return;
         } else if (data.receiverAction === 'rejected') {
             const createLogResult = await this.userService.createLog({
-                user_id: user.id, 
-                content:`Rejected Login via sent notification in ${location} use ${device}`
+                user_id: user.id,
+                content: `Rejected Login via sent notification in ${location} use ${device}`
             });
             if (!createLogResult) {
                 response.status(HttpStatus.BAD_REQUEST).json({
@@ -814,7 +1040,7 @@ export class UserController {
             requireUserVerification: true,
         });
 
-        if (verification.verified && verification.registrationInfo) { 
+        if (verification.verified && verification.registrationInfo) {
             const credentialPublicKey = verification.registrationInfo.credential.publicKey;
             const credentialID = verification.registrationInfo.credential.id;
             const counter = verification.registrationInfo.credential.counter;
@@ -845,10 +1071,10 @@ export class UserController {
             }
 
             const createLogResult = await this.userService.createLog({
-                user_id: user.id, 
-                content:`Passkey was enabled & created`
+                user_id: user.id,
+                content: `Passkey was enabled & created`
             });
-    
+
             if (!createLogResult) {
                 response.status(HttpStatus.BAD_REQUEST).json({
                     message: 'Create log failed'
@@ -939,7 +1165,7 @@ export class UserController {
             response.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Invalid token usage'
             });
-            return; 
+            return;
         }
 
         if (!data) {
@@ -982,7 +1208,7 @@ export class UserController {
             credential: passkeyInfoOpts,
         };
 
-        const verification:VerifiedAuthenticationResponse = await verifyAuthenticationResponse(opts);
+        const verification: VerifiedAuthenticationResponse = await verifyAuthenticationResponse(opts);
         const { verified, authenticationInfo } = verification;
 
         if (!verified) {
@@ -1026,8 +1252,8 @@ export class UserController {
         }
 
         const createLogResult = await this.userService.createLog({
-            user_id: user.id, 
-            content:`Login via passkey in ${location} use ${device}`
+            user_id: user.id,
+            content: `Login via passkey in ${location} use ${device}`
         });
 
         if (!createLogResult) {
@@ -1052,5 +1278,5 @@ export class UserController {
             verified: true
         });
     }
-    
+
 }

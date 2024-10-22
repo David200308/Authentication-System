@@ -1,9 +1,11 @@
 import { connection } from "../database/database";
 import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
+import { base64ToUint8Array } from "../utils/auth";
 import { 
     ADD_DEVICE_COUNT_SQL,
     CREATE_USER_SQL, 
+    ENABLE_MFA_SQL, 
     ENABLE_PASSKEY_SQL, 
     GET_USER_BY_EMAIL_SQL,
     GET_USER_BY_ID_SQL,
@@ -18,10 +20,23 @@ import {
     UPDATE_ALEADY_USED_NOTIFICATION_SQL, 
     UPDATE_NOTIFICATION_SQL 
 } from "../database/sql/notification";
-import { CREATE_LOG_SQL, GET_LOGS_BY_USERID } from "../database/sql/logs";
-import { CREATE_AUTH_SQL } from "../database/sql/auth";
-import { CREATE_PASSKEY_SQL, GET_PASSKEY_BY_PASSKEY_UID_SQL, UPDATE_PASSKEY_COUNT_SQL } from "../database/sql/passkey";
-import { base64ToUint8Array } from "../utils/auth";
+import { 
+    CREATE_PASSKEY_SQL, 
+    GET_PASSKEY_BY_PASSKEY_UID_SQL, 
+    UPDATE_PASSKEY_COUNT_SQL 
+} from "../database/sql/passkey";
+import { 
+    CREATE_LOG_SQL, 
+    GET_LOGS_BY_USERID 
+} from "../database/sql/logs";
+import { 
+    CREATE_AUTH_SQL
+} from "../database/sql/auth";
+import { 
+    CREATE_MFA_SQL, 
+    GET_MFA_BY_USER_ID_SQL, 
+    UPDATE_MFA_INITIAL_SETUP_SQL
+} from "../database/sql/mfa";
 
 @Injectable()
 export class UserServices {
@@ -212,6 +227,41 @@ export class UserServices {
             return false;
         }
     };
+
+    createMFA = async (userId: number, mfaKey: string) => {
+        try {
+            const sql = CREATE_MFA_SQL;
+            await connection.promise().query(sql, [mfaKey, userId]);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    enableMFA = async (userId: number) => {
+        try {
+            const sql1 = UPDATE_MFA_INITIAL_SETUP_SQL;
+            const sql2 = ENABLE_MFA_SQL;
+
+            await connection.promise().query(sql1, [userId]);
+            await connection.promise().query(sql2, [userId]);
+
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    getMFAByUserId = async (userId: number) => {
+        try {
+            const sql = GET_MFA_BY_USER_ID_SQL;
+            const [rows] = await connection.promise().query(sql, userId);
+            const data = rows[0];
+            return data;
+        } catch (error) {
+            return null;
+        }
+    }
 
     createLog = async (data: CreateLogSchema) => {
         const sql = CREATE_LOG_SQL;
