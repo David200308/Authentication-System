@@ -91,24 +91,31 @@ export default function NormalLogin() {
     }, []);
 
     return (
-        <Form method="post" className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-                <input
-                    type="text"
-                    name="code"
-                    placeholder="2FA OTP Code"
-                    className="px-4 py-2 border rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300"
-                    value={formData.code}
-                    onChange={handleChange}
-                />
+        <div className="flex h-screen items-center justify-center bg-gray-100">
+            <div className="text-center">
+                <h1 className="text-4xl font-bold mb-8 text-black">
+                    Verify 2FA
+                </h1>
+                <Form method="post" className="space-y-4" onSubmit={handleSubmit}>
+                    <div>
+                        <input
+                            type="text"
+                            name="code"
+                            placeholder="2FA OTP Code"
+                            className="px-4 py-2 border rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300"
+                            value={formData.code}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    {verify2FAMutation.isPending && <p>Verifying in...</p>}
+                    {verify2FAMutation.isError && <p className="text-red-500">Error: {verify2FAMutation.error.message}</p>}
+
+                    <button className="px-6 py-2 w-full bg-black text-white rounded hover:bg-gray-800" type="submit" disabled={verify2FAMutation.isPending}>
+                        Verify
+                    </button>
+                </Form>
             </div>
-
-            {verify2FAMutation.isPending && <p>Verifying in...</p>}
-            {verify2FAMutation.isError && <p className="text-red-500">Error: {verify2FAMutation.error.message}</p>}
-
-            <button className="px-6 py-2 w-full bg-black text-white rounded hover:bg-gray-800" type="submit" disabled={verify2FAMutation.isPending}>
-                Verify
-            </button>
-        </Form>
+        </div>
     );
 }
