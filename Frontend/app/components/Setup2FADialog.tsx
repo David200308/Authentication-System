@@ -104,7 +104,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
 
                 <div className="text-center">
                   <p className="font-semibold">Your OTP Key:</p>
-                  <p className="font-mono text-lg bg-gray-100 p-2 rounded-md">{otpKey}</p>
+                  <p className="font-mono text-sm bg-gray-100 p-2 rounded-md">{otpKey}</p>
                   <p className="text-sm text-gray-500">Use this key if you are unable to scan the QR code.</p>
                 </div>
 
@@ -132,7 +132,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       placeholder="Enter MFA code"
-                      className="border p-2 rounded w-full text-center"
+                      className="border p-2 rounded w-full text-center bg-white text-black"
                     />
                   </div>
 
