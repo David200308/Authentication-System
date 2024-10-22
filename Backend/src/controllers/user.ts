@@ -406,6 +406,18 @@ export class UserController {
             return;
         }
 
+        const createLogResult = await this.userService.createLog({
+            user_id: user.id,
+            content: `2FA was enabled & created`
+        });
+
+        if (!createLogResult) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create log failed'
+            });
+            return;
+        }
+
         response.json({
             message: 'MFA enabled successfully',
             status: true
