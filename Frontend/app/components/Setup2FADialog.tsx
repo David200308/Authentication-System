@@ -16,7 +16,12 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
 
   // Enable MFA mutation
   const enableMfaMutation = useMutation<
-    { qrCode: string; secret: string },
+    { 
+      message: string; 
+      status: boolean; 
+      otpauthUrl: string; 
+      secret: string 
+    },
     Error,
     { rMfa: boolean }
   >({
@@ -39,7 +44,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
     },
     onSuccess: (data) => {
       console.log("MFA enabled successfully:", data);
-      setQrCode(data.qrCode);
+      setQrCode(data.otpauthUrl);
       setOtpKey(data.secret);
       setStartVerify(false);
     },
