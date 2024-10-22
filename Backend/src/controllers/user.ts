@@ -26,7 +26,6 @@ import {
 } from '../utils/auth';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import * as speakeasy from 'speakeasy';
-import * as qrcode from 'qrcode';
 
 @Controller("user")
 export class UserController {
@@ -335,12 +334,10 @@ export class UserController {
             return;
         }
 
-        const qrCodeDataURL = await qrcode.toDataURL(secret.otpauth_url);
-
         response.json({
             message: 'MFA enabled',
             status: true,
-            qrCode: qrCodeDataURL,
+            otpauthUrl: secret.otpauth_url,
             secret: secret.base32
         });
     }
