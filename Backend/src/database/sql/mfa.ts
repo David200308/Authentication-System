@@ -12,4 +12,4 @@ export const GET_MFA_BY_USER_ID_NOT_VERIFY_SQL = 'SELECT * FROM mfa WHERE user_i
 
 export const GET_MFA_BY_USER_ID_SQL = 'SELECT * FROM mfa WHERE user_id = ? AND initialSetup = TRUE';
 
-export const UPDATE_MFA_INITIAL_SETUP_SQL = 'UPDATE mfa SET initialSetup = TRUE WHERE user_id = ?';
+export const UPDATE_MFA_INITIAL_SETUP_SQL = 'UPDATE mfa SET initialSetup = TRUE WHERE user_id = ? AND initialSetup = FALSE ORDER BY enableAt DESC LIMIT 1';
