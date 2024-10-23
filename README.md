@@ -26,6 +26,12 @@ openssl ecparam -name prime256v1 -genkey -noout -out private_key.pem
 openssl ec -in private_key.pem -pubout -out public_key.pem
 ```
 
+## Database AES Key Generate
+
+```
+head /dev/urandom | sha256sum
+```
+
 ## Running the Frontend
 
 ```bash

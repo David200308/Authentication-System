@@ -1,7 +1,7 @@
 import { connection } from "../database/database";
 import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
-import { base64ToUint8Array } from "../utils/auth";
+import { base64ToUint8Array, mysqlAESDecrypt, mysqlAESEncrypt } from "../utils/auth";
 import { 
     ADD_DEVICE_COUNT_SQL,
     CREATE_USER_SQL, 
@@ -9,14 +9,14 @@ import {
     ENABLE_PASSKEY_SQL, 
     GET_USER_BY_EMAIL_SQL,
     GET_USER_BY_ID_SQL,
-    GET_USER_BY_NAME_SQL,
+    // GET_USER_BY_NAME_SQL,
     REMOVE_DEVICE_COUNT_SQL
 } from "../database/sql/user";
 import { 
     CREATE_NOTIFICATION_SQL, 
     GET_LATEST_NOTIFICATION_BY_USER_ID_SQL, 
     GET_NOTIFICATION_BY_UUID_SQL, 
-    GET_NOTIFICATIONS_BY_USER_ID_SQL, 
+    // GET_NOTIFICATIONS_BY_USER_ID_SQL, 
     UPDATE_ALEADY_USED_NOTIFICATION_SQL, 
     UPDATE_NOTIFICATION_SQL 
 } from "../database/sql/notification";
@@ -62,16 +62,16 @@ export class UserServices {
         }
     }
 
-    getUserByName = async (username: string) => {
-        try {
-            const sql = GET_USER_BY_NAME_SQL;
-            const [rows] = await connection.promise().query(sql, username);
-            const data = rows[0] as User;
-            return data;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
+    // getUserByName = async (username: string) => {
+    //     try {
+    //         const sql = GET_USER_BY_NAME_SQL;
+    //         const [rows] = await connection.promise().query(sql, username);
+    //         const data = rows[0] as User;
+    //         return data;
+    //     } catch (error) {
+    //         throw new Error(error);
+    //     }
+    // }
 
     getUserById = async (id: number): Promise<User> => {
         try {
@@ -106,6 +106,18 @@ export class UserServices {
     }
 
     createAuthRecord = async (data: CreateAuthRecordSchema) => {
+        const encryptedIp = await mysqlAESEncrypt(data.ipAddress);
+        const encryptedDeviceName = await mysqlAESEncrypt(data.loginDeviceName);
+        const encryptedLocation = await mysqlAESEncrypt(data.loginLocation);
+        if (encryptedIp) {
+            data.ipAddress = encryptedIp;
+        }
+        if (encryptedDeviceName) {
+            data.loginDeviceName = encryptedDeviceName;
+        }
+        if (encryptedLocation) {
+            data.loginLocation = encryptedLocation;
+        }
         const sql = CREATE_AUTH_SQL;
         const [result] = await connection.promise().query(sql, data);
         return result;
@@ -119,6 +131,19 @@ export class UserServices {
         sentNotificationIp: string,
         authCode: string
     ) => {
+        const encryptedIp = await mysqlAESEncrypt(sentNotificationIp);
+        const encryptedDeviceName = await mysqlAESEncrypt(sentNotificationDeviceName);
+        const encryptedLocation = await mysqlAESEncrypt(sentNotificationLocation);
+        if (encryptedIp) {
+            sentNotificationIp = encryptedIp;
+        }
+        if (encryptedDeviceName) {
+            sentNotificationDeviceName = encryptedDeviceName;
+        }
+        if (encryptedLocation) {
+            sentNotificationLocation = encryptedLocation;
+        }
+
         const sql = CREATE_NOTIFICATION_SQL;
         const [result] = await connection.promise().query(sql, {
             user_id,
@@ -137,22 +162,36 @@ export class UserServices {
             const sql = GET_LATEST_NOTIFICATION_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, [id, 'pending']);
             const data = rows[0] as Notification;
+            if (data) {
+                const decryptedIp = await mysqlAESDecrypt(data.sentNotificationIp);
+                const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
+                const decryptedLocation = await mysqlAESDecrypt(data.sentNotificationLocation);
+                if (decryptedIp) {
+                    data.sentNotificationIp = decryptedIp;
+                }
+                if (decryptedDeviceName) {
+                    data.sentNotificationDeviceName = decryptedDeviceName;
+                }
+                if (decryptedLocation) {
+                    data.sentNotificationLocation = decryptedLocation;
+                }
+            }
             return data;
         } catch (error) {
             throw new Error(error);
         }
     }
 
-    getAllLoginNotificationsByUserId = async(id: number) => {
-        try {
-            const sql = GET_NOTIFICATIONS_BY_USER_ID_SQL;
-            const [rows] = await connection.promise().query(sql, id);
-            const data = rows as User[];
-            return data;
-        } catch (error) {
-            throw new Error(error);
-        }
-    };
+    // getAllLoginNotificationsByUserId = async(id: number) => {
+    //     try {
+    //         const sql = GET_NOTIFICATIONS_BY_USER_ID_SQL;
+    //         const [rows] = await connection.promise().query(sql, id);
+    //         const data = rows as Notification[];
+    //         return data;
+    //     } catch (error) {
+    //         throw new Error(error);
+    //     }
+    // };
 
     updateLoginNotification = async(receiverAction: string, notification_uuid: string, user_id: number) => {
         try {
@@ -169,6 +208,20 @@ export class UserServices {
             const sql = GET_NOTIFICATION_BY_UUID_SQL;
             const [rows] = await connection.promise().query(sql, notification_uuid);
             const data = rows[0] as Notification;
+            if (data) {
+                const decryptedIp = await mysqlAESDecrypt(data.sentNotificationIp);
+                const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
+                const decryptedLocation = await mysqlAESDecrypt(data.sentNotificationLocation);
+                if (decryptedIp) {
+                    data.sentNotificationIp = decryptedIp;
+                }
+                if (decryptedDeviceName) {
+                    data.sentNotificationDeviceName = decryptedDeviceName;
+                }
+                if (decryptedLocation) {
+                    data.sentNotificationLocation = decryptedLocation;
+                }
+            }
             return data;
         } catch (error) {
             throw new Error(error);
@@ -279,6 +332,10 @@ export class UserServices {
     }
 
     createLog = async (data: CreateLogSchema) => {
+        const encryptedData = await mysqlAESEncrypt(data.content);
+        if (encryptedData) {
+            data.content = encryptedData;
+        }
         const sql = CREATE_LOG_SQL;
         const [result] = await connection.promise().query(sql, data);
         return result;
@@ -288,6 +345,14 @@ export class UserServices {
         const sql = GET_LOGS_BY_USERID;
         const [rows] = await connection.promise().query(sql, userId);
         const data = rows as Logs[];
+        // decrypt logs
+        data.forEach(async(log) => {
+            const decryptedData = await mysqlAESDecrypt(log.content);
+            if (decryptedData) {
+                log.content = decryptedData;
+            }
+        });
+
         return data;
     };
 

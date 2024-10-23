@@ -2,7 +2,9 @@ import { compare, hash } from "bcryptjs";
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
-import 'dotenv/config'
+import { connection } from "../database/database";
+import crypto from 'crypto';
+import 'dotenv/config';
 
 export const passwordHash = async (password: string) => {
     const hashedPassword = await hash(password, 10);
@@ -93,3 +95,30 @@ export const intToUint8Array = (num: number): Uint8Array => {
 
 export const uint8ArrayToInt = (uint8Array: Uint8Array): number =>
     new DataView(uint8Array.buffer).getUint32(0);
+
+export async function mysqlAESEncrypt(data: string): Promise<string | null> {
+    const key = process.env.AES_KEY;
+    const iv = crypto.randomBytes(16).toString('hex');
+
+    await connection.execute("SET block_encryption_mode = 'aes-256-cbc'");
+    const [rows]: any = await connection.execute(
+        "SELECT HEX(AES_ENCRYPT(?, UNHEX(?), UNHEX(?))) AS encrypted",
+        [data, key, iv]
+    );
+
+    return rows[0] ? rows[0].encrypted + ':' + iv : null;
+}
+
+export async function mysqlAESDecrypt(encryptedData: string): Promise<string | null> {
+    const key = process.env.AES_KEY;
+    const [data, iv] = encryptedData.split(':');
+
+    await connection.execute("SET block_encryption_mode = 'aes-256-cbc'");
+    const [rows]: any = await connection.execute(
+        "SELECT AES_DECRYPT(UNHEX(?), UNHEX(?), UNHEX(?)) AS decrypted",
+        [data, key, iv]
+    );
+
+    const decryptedData = rows[0] ? rows[0].decrypted : null;
+    return decryptedData ? decryptedData.toString('utf-8') : null;
+}
