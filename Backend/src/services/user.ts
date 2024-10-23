@@ -107,14 +107,14 @@ export class UserServices {
 
     createAuthRecord = async (data: CreateAuthRecordSchema) => {
         const encryptedIp = await mysqlAESEncrypt(data.ipAddress);
-        const encryptedDeviceName = await mysqlAESEncrypt(data.loginDeviceName);
+        // const encryptedDeviceName = await mysqlAESEncrypt(data.loginDeviceName);
         const encryptedLocation = await mysqlAESEncrypt(data.loginLocation);
         if (encryptedIp) {
             data.ipAddress = encryptedIp;
         }
-        if (encryptedDeviceName) {
-            data.loginDeviceName = encryptedDeviceName;
-        }
+        // if (encryptedDeviceName) {
+        //     data.loginDeviceName = encryptedDeviceName;
+        // }
         if (encryptedLocation) {
             data.loginLocation = encryptedLocation;
         }
@@ -132,14 +132,14 @@ export class UserServices {
         authCode: string
     ) => {
         const encryptedIp = await mysqlAESEncrypt(sentNotificationIp);
-        const encryptedDeviceName = await mysqlAESEncrypt(sentNotificationDeviceName);
+        // const encryptedDeviceName = await mysqlAESEncrypt(sentNotificationDeviceName);
         const encryptedLocation = await mysqlAESEncrypt(sentNotificationLocation);
         if (encryptedIp) {
             sentNotificationIp = encryptedIp;
         }
-        if (encryptedDeviceName) {
-            sentNotificationDeviceName = encryptedDeviceName;
-        }
+        // if (encryptedDeviceName) {
+        //     sentNotificationDeviceName = encryptedDeviceName;
+        // }
         if (encryptedLocation) {
             sentNotificationLocation = encryptedLocation;
         }
@@ -164,14 +164,14 @@ export class UserServices {
             const data = rows[0] as Notification;
             if (data) {
                 const decryptedIp = await mysqlAESDecrypt(data.sentNotificationIp);
-                const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
+                // const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
                 const decryptedLocation = await mysqlAESDecrypt(data.sentNotificationLocation);
                 if (decryptedIp) {
                     data.sentNotificationIp = decryptedIp;
                 }
-                if (decryptedDeviceName) {
-                    data.sentNotificationDeviceName = decryptedDeviceName;
-                }
+                // if (decryptedDeviceName) {
+                //     data.sentNotificationDeviceName = decryptedDeviceName;
+                // }
                 if (decryptedLocation) {
                     data.sentNotificationLocation = decryptedLocation;
                 }
@@ -210,14 +210,14 @@ export class UserServices {
             const data = rows[0] as Notification;
             if (data) {
                 const decryptedIp = await mysqlAESDecrypt(data.sentNotificationIp);
-                const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
+                // const decryptedDeviceName = await mysqlAESDecrypt(data.sentNotificationDeviceName);
                 const decryptedLocation = await mysqlAESDecrypt(data.sentNotificationLocation);
                 if (decryptedIp) {
                     data.sentNotificationIp = decryptedIp;
                 }
-                if (decryptedDeviceName) {
-                    data.sentNotificationDeviceName = decryptedDeviceName;
-                }
+                // if (decryptedDeviceName) {
+                //     data.sentNotificationDeviceName = decryptedDeviceName;
+                // }
                 if (decryptedLocation) {
                     data.sentNotificationLocation = decryptedLocation;
                 }
@@ -332,10 +332,10 @@ export class UserServices {
     }
 
     createLog = async (data: CreateLogSchema) => {
-        const encryptedData = await mysqlAESEncrypt(data.content);
-        if (encryptedData) {
-            data.content = encryptedData;
-        }
+        // const encryptedData = await mysqlAESEncrypt(data.content);
+        // if (encryptedData) {
+        //     data.content = encryptedData;
+        // }
         const sql = CREATE_LOG_SQL;
         const [result] = await connection.promise().query(sql, data);
         return result;
@@ -346,12 +346,12 @@ export class UserServices {
         const [rows] = await connection.promise().query(sql, userId);
         const data = rows as Logs[];
         // decrypt logs
-        data.forEach(async(log) => {
-            const decryptedData = await mysqlAESDecrypt(log.content);
-            if (decryptedData) {
-                log.content = decryptedData;
-            }
-        });
+        // data.forEach(async(log) => {
+        //     const decryptedData = await mysqlAESDecrypt(log.content);
+        //     if (decryptedData) {
+        //         log.content = decryptedData;
+        //     }
+        // });
 
         return data;
     };

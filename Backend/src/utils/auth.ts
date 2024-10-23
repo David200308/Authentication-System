@@ -3,7 +3,7 @@ import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { connection } from "../database/database";
-import crypto from 'crypto';
+import { randomBytes } from 'crypto';
 import 'dotenv/config';
 
 export const passwordHash = async (password: string) => {
@@ -98,10 +98,10 @@ export const uint8ArrayToInt = (uint8Array: Uint8Array): number =>
 
 export async function mysqlAESEncrypt(data: string): Promise<string | null> {
     const key = process.env.AES_KEY;
-    const iv = crypto.randomBytes(16).toString('hex');
+    const iv = randomBytes(16).toString('hex');
 
-    await connection.execute("SET block_encryption_mode = 'aes-256-cbc'");
-    const [rows]: any = await connection.execute(
+    await connection.promise().query("SET block_encryption_mode = 'aes-256-cbc'");
+    const [rows]: any = await connection.promise().query(
         "SELECT HEX(AES_ENCRYPT(?, UNHEX(?), UNHEX(?))) AS encrypted",
         [data, key, iv]
     );
@@ -113,8 +113,8 @@ export async function mysqlAESDecrypt(encryptedData: string): Promise<string | n
     const key = process.env.AES_KEY;
     const [data, iv] = encryptedData.split(':');
 
-    await connection.execute("SET block_encryption_mode = 'aes-256-cbc'");
-    const [rows]: any = await connection.execute(
+    await connection.promise().query("SET block_encryption_mode = 'aes-256-cbc'");
+    const [rows]: any = await connection.promise().query(
         "SELECT AES_DECRYPT(UNHEX(?), UNHEX(?), UNHEX(?)) AS decrypted",
         [data, key, iv]
     );
