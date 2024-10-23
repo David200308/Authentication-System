@@ -22,7 +22,8 @@ import {
     rpID,
     origin,
     intToUint8Array,
-    uint8ArrayToBase64
+    uint8ArrayToBase64,
+    sqliCheck
 } from '../utils/auth';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import * as speakeasy from 'speakeasy';
@@ -100,6 +101,13 @@ export class UserController {
             });
             return;
         }
+        if (sqliCheck(data.password) || sqliCheck(data.username)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid input'
+            });
+            return;
+        }
+
         const password = await passwordHash(data.password);
         data.password = password;
         try {
@@ -125,6 +133,25 @@ export class UserController {
     // Password login
     @Post('login/password')
     async login(@Body() data: PasswordSignInSchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!data.email || !data.password) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Email and password is required'
+            });
+            return;
+        }
+        if (!validateEmail(data.email)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid email'
+            });
+            return;
+        }
+        if (sqliCheck(data.password)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid input'
+            });
+            return;
+        }
+
         const user = await this.userService.getUserByEmail(data.email);
         if (!user) {
             response.status(HttpStatus.NOT_FOUND).json({
@@ -375,6 +402,12 @@ export class UserController {
             });
             return;
         }
+        if (!data.code || data.code.length !== 6 || sqliCheck(data.code)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid MFA code'
+            });
+            return;
+        }
 
         const user = await this.userService.getUserById(parseInt(payload.aud));
         if (!user) {
@@ -461,6 +494,13 @@ export class UserController {
         if (payload.usage !== 'mfa verification') {
             response.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Invalid token usage'
+            });
+            return;
+        }
+
+        if (!data.code || data.code.length !== 6 || sqliCheck(data.code)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid MFA code'
             });
             return;
         }
@@ -602,7 +642,7 @@ export class UserController {
     // Notification login
     @Post('login/notification')
     async loginWithNotification(@Body() data: { email: string }, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
-        if (!data.email) {
+        if (!data.email || !validateEmail(data.email)) {
             response.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Email is required'
             });
@@ -723,6 +763,13 @@ export class UserController {
         if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
             response.status(HttpStatus.UNAUTHORIZED).json({
                 message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data.authCode || data.authCode.length !== 6 || sqliCheck(data.authCode)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid auth code'
             });
             return;
         }

@@ -6,6 +6,15 @@ import { connection } from "../database/database";
 import { randomBytes } from 'crypto';
 import 'dotenv/config';
 
+const SQLI_BLACKLIST = ["'", '"', ";", "--", "/*", "*/", "=", "%", "<", ">", "(", ")", "$", "&", "|", "^", "~", "`", "+", "[", "]", "{", "}", "\\", "/", ":", ",", "?", "_", " ", "\t", "\n", "\r", "\x00", "\x1a"];
+
+export const sqliCheck = (input: string) => {
+    for (const sqli of SQLI_BLACKLIST) {
+        if (input.includes(sqli)) return true;
+    }
+    return false;
+};
+
 export const passwordHash = async (password: string) => {
     const hashedPassword = await hash(password, 10);
     return hashedPassword;
