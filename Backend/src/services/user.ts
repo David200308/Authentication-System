@@ -285,9 +285,10 @@ export class UserServices {
     createMFA = async (userId: number, mfaKey: string) => {
         try {
             const sql = CREATE_MFA_SQL;
+            const encryptedMFAKey = await mysqlAESEncrypt(mfaKey);
             await connection.promise().query(sql, {
                 user_id: userId,
-                mfa_key: mysqlAESEncrypt(mfaKey),
+                mfa_key: encryptedMFAKey
             });
             return true;
         } catch (error) {
