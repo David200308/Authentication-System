@@ -287,7 +287,7 @@ export class UserServices {
             const sql = CREATE_MFA_SQL;
             await connection.promise().query(sql, {
                 user_id: userId,
-                mfa_key: mfaKey,
+                mfa_key: mysqlAESEncrypt(mfaKey),
             });
             return true;
         } catch (error) {
@@ -314,6 +314,12 @@ export class UserServices {
             const sql = GET_MFA_BY_USER_ID_NOT_VERIFY_SQL;
             const [rows] = await connection.promise().query(sql, userId);
             const data = rows[0];
+            if (data) {
+                const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
+                if (decryptedMFAKey) {
+                    data.mfa_key = decryptedMFAKey;
+                }
+            }
             return data;
         } catch (error) {
             return null;
@@ -325,6 +331,12 @@ export class UserServices {
             const sql = GET_MFA_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, userId);
             const data = rows[0];
+            if (data) {
+                const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
+                if (decryptedMFAKey) {
+                    data.mfa_key = decryptedMFAKey;
+                }
+            }
             return data;
         } catch (error) {
             return null;
