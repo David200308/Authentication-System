@@ -14,7 +14,9 @@ export const checkEnv = () => {
         'PASSKEY_RPNAME',
         'PASSKEY_RPID',
         'PASSKEY_ORIGIN',
-        'AES_KEY'
+        'AES_KEY',
+        'MAILGUN_API_KEY',
+        'MAILGUN_FROM_DOMAIN'
     ];
     
     for (const varName of requiredEnvVars) {
@@ -82,6 +84,16 @@ export const checkEnv = () => {
             case 'AES_KEY':
                 if (!process.env.AES_KEY) {
                     throw new Error('Please provide AES_KEY in .env file');
+                }
+                break;
+            case 'MAILGUN_API_KEY':
+                if (!process.env.MAILGUN_API_KEY) {
+                    throw new Error('Please provide MAILGUN_API_KEY in .env file');
+                }
+                break;
+            case 'MAILGUN_FROM_DOMAIN':
+                if (!process.env.MAILGUN_FROM_DOMAIN) {
+                    throw new Error('Please provide MAILGUN_FROM_DOMAIN in .env file');
                 }
                 break;
             default:

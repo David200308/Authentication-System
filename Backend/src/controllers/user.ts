@@ -27,6 +27,7 @@ import {
 } from '../utils/auth';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import * as speakeasy from 'speakeasy';
+import { sendActivationEmail } from '../utils/email';
 
 @Controller("user")
 export class UserController {
@@ -124,6 +125,28 @@ export class UserController {
             });
             return;
         }
+
+        const payload = {
+            email: data.email,
+            usage: 'registration in progress'
+        };
+
+        const token = generateToken(payload, false);
+
+        const emailVerificationTokenPayload = {
+            email: data.email,
+            usage: 'activation',
+        };
+        const emailVerificationToken = generateToken(emailVerificationTokenPayload, true);
+        const res: boolean = await sendActivationEmail(data.email, emailVerificationToken);
+        if (!res) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Send activation email failed'
+            });
+            return;
+        }
+
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
 
         response.status(HttpStatus.OK).json({
             message: 'Register successful'
@@ -305,6 +328,84 @@ export class UserController {
                 mfaEnabled: user.mfaEnabled,
                 passkeyEnabled: user.passkeyEnabled,
             }
+        });
+    }
+
+    // User Activation
+    @Post('activate')
+    async activateUser(@Body() data: { email: string, token: string}, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!data || !data.email || !data.token) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: "Email and token is required"
+            });
+            return;
+        }
+
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object") {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (payload.usage !== 'registration in progress') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token usage'
+            });
+            return;
+        }
+
+        if (!validateEmail(data.email)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: "Invalid email"
+            });
+            return;
+        }
+
+        const verificationPayload = await verifyToken(data.token);
+        if (verificationPayload) {
+            if (verificationPayload.email !== data.email || payload.usage !== 'activation') {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: "Invalid token"
+                });
+                return;
+            }
+
+            const res = await this.userService.activateUser(data.email);
+            if (!res) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: "Account activation failed",
+                    status: false
+                });
+                return;
+            }
+
+            response.status(HttpStatus.OK).json({
+                message: "Account activated",
+                status: true
+            });
+            return;
+        }
+        response.status(HttpStatus.BAD_REQUEST).json({
+            message: "Account activation failed",
+            status: false
         });
     }
 

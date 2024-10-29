@@ -3,6 +3,7 @@ import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthReco
 import { Injectable } from '@nestjs/common';
 import { base64ToUint8Array, mysqlAESDecrypt, mysqlAESEncrypt } from "../utils/auth";
 import { 
+    ACTIVATE_USER_SQL,
     ADD_DEVICE_COUNT_SQL,
     CREATE_USER_SQL, 
     ENABLE_MFA_SQL, 
@@ -81,6 +82,16 @@ export class UserServices {
             return data;
         } catch (error) {
             throw new Error(error);
+        }
+    }
+
+    activateUser = async (email: string) => {
+        try {
+            const sql = ACTIVATE_USER_SQL;
+            await connection.promise().query(sql, email);
+            return true;
+        } catch (error) {
+            return false;
         }
     }
 
