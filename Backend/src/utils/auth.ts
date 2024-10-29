@@ -73,15 +73,16 @@ export function generateRandom6Digits() {
 }
 
 export async function getIPDeviiceNameLocation(request: Request) {
-    let loginIpAddress = request.headers['x-forwarded-for'];
-    if (Array.isArray(loginIpAddress)) {
-        loginIpAddress = loginIpAddress[0];
-    }
-    if (loginIpAddress.includes(',')) {
-        loginIpAddress = loginIpAddress.split(',')[0].trim();
-    }
+    let loginIpAddress = request.headers['x-forwarded-for'] as string;
+    // if (Array.isArray(loginIpAddress)) {
+    //     loginIpAddress = loginIpAddress[0];
+    // }
+    // if (loginIpAddress.includes(',')) {
+    //     loginIpAddress = loginIpAddress.split(',')[0].trim();
+    // }
     const device = request.headers['user-agent'];
-    const location = await getIpLocation(loginIpAddress);
+    // const location = await getIpLocation(loginIpAddress);
+    const location = 'Hong Kong';
 
     return { loginIpAddress, device, location };
 }

@@ -1,5 +1,5 @@
 import { connection } from "../database/database";
-import { SignUpSchema, User, Notification, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
+import { SignUpSchema, User, Notification, QR, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
 import { Injectable } from '@nestjs/common';
 import { base64ToUint8Array, mysqlAESDecrypt, mysqlAESEncrypt } from "../utils/auth";
 import { 
@@ -20,6 +20,12 @@ import {
     UPDATE_ALEADY_USED_NOTIFICATION_SQL, 
     UPDATE_NOTIFICATION_SQL 
 } from "../database/sql/notification";
+import {
+    CREATE_QR_SQL,
+    GET_QR_BY_UUID_SQL,
+    GET_QR_BY_UUID_AUTHCODE_SQL,
+    UPDATE_QR_SQL
+} from "../database/sql/qr";
 import { 
     CREATE_PASSKEY_SQL, 
     GET_PASSKEY_BY_PASSKEY_UID_SQL, 
@@ -155,6 +161,98 @@ export class UserServices {
             authCode
         });
         return result;
+    };
+
+    createLoginQrCode = async (
+        qr_uuid: string,
+        qrDeviceName: string,
+        qrLocation: string,
+        qrIp: string,
+        authCode: string
+    ) => {
+        const encryptedIp = await mysqlAESEncrypt(qrIp);
+        // const encryptedDeviceName = await mysqlAESEncrypt(qrDeviceName);
+        const encryptedLocation = await mysqlAESEncrypt(qrLocation);
+        if (encryptedIp) {
+            qrIp = encryptedIp;
+        }
+        // if (encryptedDeviceName) {
+        //     qrDeviceName = encryptedDeviceName;
+        // }
+        if (encryptedLocation) {
+            qrLocation = encryptedLocation;
+        }
+
+        const sql = CREATE_QR_SQL;
+        const [result] = await connection.promise().query(sql, {
+            qr_uuid,
+            qrDeviceName,
+            qrLocation,
+            qrIp,
+            scannerAction: 'pending',
+            authCode
+        });
+        return result;
+    };
+
+    getUserQRCodeByQRUUId = async(qr_uuid: string): Promise<QR> => {
+        try {
+            const sql = GET_QR_BY_UUID_SQL;
+            const [rows] = await connection.promise().query(sql, qr_uuid);
+            const data = rows[0] as QR;
+            if (data) {
+                const decryptedIp = await mysqlAESDecrypt(data.qrIp);
+                // const qrName = await mysqlAESDecrypt(data.qrDeviceName);
+                const decryptedLocation = await mysqlAESDecrypt(data.qrLocation);
+                if (decryptedIp) {
+                    data.qrIp = decryptedIp;
+                }
+                // if (decryptedDeviceName) {
+                //     data.qrDeviceName = decryptedDeviceName;
+                // }
+                if (decryptedLocation) {
+                    data.qrLocation = decryptedLocation;
+                }
+            }
+            return data;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
+    getUserQRCodeByQRUUIdAndAuthCode = async(qr_uuid: string, authCode: string): Promise<QR> => {
+        try {
+            const sql = GET_QR_BY_UUID_AUTHCODE_SQL;
+            const [rows] = await connection.promise().query(sql, [qr_uuid, authCode]);
+            const data = rows[0] as QR;
+            if (data) {
+                const decryptedIp = await mysqlAESDecrypt(data.qrIp);
+                // const qrName = await mysqlAESDecrypt(data.qrDeviceName);
+                const decryptedLocation = await mysqlAESDecrypt(data.qrLocation);
+                if (decryptedIp) {
+                    data.qrIp = decryptedIp;
+                }
+                // if (decryptedDeviceName) {
+                //     data.qrDeviceName = decryptedDeviceName;
+                // }
+                if (decryptedLocation) {
+                    data.qrLocation = decryptedLocation;
+                }
+            }
+            return data;
+        } catch (error) {
+            throw new Error(error);
+        }
+    };
+
+    updateLoginQR = async(scannerAction: string, qr_uuid: string, user_id: number) => {
+        try {
+            const sql = UPDATE_QR_SQL;
+            const [result] = await connection.promise().query(sql, [user_id, scannerAction, new Date(), qr_uuid]);
+            return result;
+        } catch (error) {
+            throw new Error(error);
+        }
     };
 
     getUserLoginNotificationByUserId = async(id: number) => {
