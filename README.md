@@ -1,5 +1,7 @@
 # COMP4334 Team 4 Project: Authorization System
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/7201477420224c4e8cbe4e7e415efbf0)](https://app.codacy.com?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 ## Authentication Methods
 
 - Password Authentication

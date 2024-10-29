@@ -9,3 +9,14 @@ const access: PoolOptions = {
 };
 
 export const connection = createPool(access);
+
+export const checkDBConnection = async () => {
+    try {
+        const promisePool = connection.promise();
+        await promisePool.query('SELECT 1');
+        console.log('Database connection established successfully.');
+    } catch (error) {
+        console.error('Error connecting to the database:', error.message);
+        throw new Error('Database connection failed');
+    }
+};
