@@ -19,7 +19,7 @@ export const sendActivationEmail = async (to: string, token: string) => {
     formdata.append("to", to);
     formdata.append("subject", "Please activate your account!");
     formdata.append("text", "Please activate your account!");
-    formdata.append("html", activationEmail(`${process.env.PASSKEY_ORIGIN}/verify-email/${to}/${token}`));
+    formdata.append("html", activationEmail(`${process.env.PASSKEY_ORIGIN}/verify-email?email=${to}&token=${token}`));
 
     const requestOptions = {
         method: 'POST',

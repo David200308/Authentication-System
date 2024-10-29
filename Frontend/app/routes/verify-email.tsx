@@ -1,4 +1,4 @@
-import { Form, useNavigate, useParams } from "@remix-run/react";
+import { Form, useNavigate, useSearchParams } from "@remix-run/react";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -48,7 +48,9 @@ async function verifyToken() {
 
 export default function VerifyEmail() {
     const navigate = useNavigate();
-    const { email, token } = useParams();
+    const [searchParams] = useSearchParams();
+    const email = searchParams.get('email');
+    const token = searchParams.get('token');
 
     const [formData,] = useState<VerifyEmailData>({
         email: email || "",
