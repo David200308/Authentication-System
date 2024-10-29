@@ -68,7 +68,7 @@ export default function Signup() {
     onSuccess: (data: SignupResponse) => {
       console.log("User signed up successfully:", data);
       if (data.message === "Register successful") {
-        window.location.href = "/login";
+        window.location.href = "/verify-email";
       }
     },
     onError: (error: Error) => {
