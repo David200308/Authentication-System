@@ -42,7 +42,7 @@ export default function Login() {
     }).catch(() => {
       console.log("need to login");
     });
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="flex h-screen items-center justify-center bg-gray-100">

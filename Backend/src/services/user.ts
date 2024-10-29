@@ -3,6 +3,7 @@ import { SignUpSchema, User, Notification, QR, Logs, CreateLogSchema, CreateAuth
 import { Injectable } from '@nestjs/common';
 import { base64ToUint8Array, mysqlAESDecrypt, mysqlAESEncrypt } from "../utils/auth";
 import { 
+    ACTIVATE_USER_SQL,
     ADD_DEVICE_COUNT_SQL,
     CREATE_USER_SQL, 
     ENABLE_MFA_SQL, 
@@ -87,6 +88,16 @@ export class UserServices {
             return data;
         } catch (error) {
             throw new Error(error);
+        }
+    }
+
+    activateUser = async (email: string) => {
+        try {
+            const sql = ACTIVATE_USER_SQL;
+            await connection.promise().query(sql, email);
+            return true;
+        } catch (error) {
+            return false;
         }
     }
 
@@ -383,9 +394,10 @@ export class UserServices {
     createMFA = async (userId: number, mfaKey: string) => {
         try {
             const sql = CREATE_MFA_SQL;
+            const encryptedMFAKey = await mysqlAESEncrypt(mfaKey);
             await connection.promise().query(sql, {
                 user_id: userId,
-                mfa_key: mfaKey,
+                mfa_key: encryptedMFAKey
             });
             return true;
         } catch (error) {
@@ -412,6 +424,12 @@ export class UserServices {
             const sql = GET_MFA_BY_USER_ID_NOT_VERIFY_SQL;
             const [rows] = await connection.promise().query(sql, userId);
             const data = rows[0];
+            if (data) {
+                const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
+                if (decryptedMFAKey) {
+                    data.mfa_key = decryptedMFAKey;
+                }
+            }
             return data;
         } catch (error) {
             return null;
@@ -423,6 +441,12 @@ export class UserServices {
             const sql = GET_MFA_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, userId);
             const data = rows[0];
+            if (data) {
+                const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
+                if (decryptedMFAKey) {
+                    data.mfa_key = decryptedMFAKey;
+                }
+            }
             return data;
         } catch (error) {
             return null;

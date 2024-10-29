@@ -45,7 +45,7 @@ async function verifyToken() {
     return response.json();
 }
 
-export default function NormalLogin() {
+export default function Verify2FA() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState<Verify2FAData>({
         code: "",
@@ -88,7 +88,7 @@ export default function NormalLogin() {
         }).catch(() => {
             console.log("need to login");
         });
-    }, []);
+    }, [navigate]);
 
     return (
         <div className="flex h-screen items-center justify-center bg-gray-100">
