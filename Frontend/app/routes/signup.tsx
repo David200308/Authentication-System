@@ -47,6 +47,7 @@ async function verifyToken() {
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [needVerifyMessage, setNeedVerifyMessage] = useState<string>("");
   const [formData, setFormData] = useState<SignupData>({
     username: "",
     email: "",
@@ -68,7 +69,7 @@ export default function Signup() {
     onSuccess: (data: SignupResponse) => {
       console.log("User signed up successfully:", data);
       if (data.message === "Register successful") {
-        window.location.href = "/verify-email";
+        setNeedVerifyMessage("Please check your email to verify your account.");
       }
     },
     onError: (error: Error) => {
@@ -128,6 +129,7 @@ export default function Signup() {
           <button className="px-6 py-2 w-80 bg-black text-white rounded hover:bg-gray-800" type="submit" disabled={signupMutation.isPending}>
             Signup
           </button>
+          {needVerifyMessage && <p className="text-gray-700">{needVerifyMessage}</p>}
         </Form>
       </div>
     </div>

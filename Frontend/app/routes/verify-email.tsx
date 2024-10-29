@@ -119,13 +119,6 @@ export default function VerifyEmail() {
                         </Form>
                     </div>
                 )}
-                {!email || !token && (
-                    <div>
-                        <h1 className="text-4xl font-bold mb-8 text-black">
-                            Please check your email for the verification link.
-                        </h1>
-                    </div>
-                )}
             </div>
         </div>
     );
