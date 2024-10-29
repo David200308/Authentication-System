@@ -22,7 +22,7 @@ async function verifyEmail(data: VerifyEmailData): Promise<VerifyResponse> {
     });
 
     if (!response.ok) {
-        throw new Error("Failed to login");
+        throw new Error("Failed to activate");
     }
 
     return response.json();
@@ -60,7 +60,7 @@ export default function VerifyEmail() {
     const verifyEmailMutation = useMutation<VerifyResponse, Error, VerifyEmailData>({
         mutationFn: verifyEmail,
         onSuccess: (data: VerifyResponse) => {
-            console.log("User logged in successfully:", data);
+            console.log("User activate account successfully:", data);
             if (data.status) {
                 window.location.href = "/login";
                 return;
@@ -120,9 +120,11 @@ export default function VerifyEmail() {
                     </div>
                 )}
                 {!email || !token && (
-                    <h1 className="text-4xl font-bold mb-8 text-black">
-                        Please check your email for the verification link.
-                    </h1>
+                    <div>
+                        <h1 className="text-4xl font-bold mb-8 text-black">
+                            Please check your email for the verification link.
+                        </h1>
+                    </div>
                 )}
             </div>
         </div>

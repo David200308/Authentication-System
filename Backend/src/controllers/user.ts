@@ -381,7 +381,7 @@ export class UserController {
 
         const verificationPayload = await verifyToken(data.token);
         if (verificationPayload) {
-            if (verificationPayload.email !== data.email || payload.usage !== 'activation') {
+            if (verificationPayload.email !== data.email || verificationPayload.usage !== 'activation') {
                 response.status(HttpStatus.BAD_REQUEST).json({
                     message: "Invalid token"
                 });
