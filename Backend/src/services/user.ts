@@ -24,7 +24,7 @@ import {
 import {
     CREATE_QR_SQL,
     GET_QR_BY_UUID_SQL,
-    GET_QR_BY_UUID_AUTHCODE_SQL,
+    UPDATE_ALEADY_USED_QR_SQL,
     UPDATE_QR_SQL
 } from "../database/sql/qr";
 import { 
@@ -231,26 +231,11 @@ export class UserServices {
         }
     };
 
-    getUserQRCodeByQRUUIdAndAuthCode = async(qr_uuid: string, authCode: string): Promise<QR> => {
+    updateAlreadyUsedQR = async(qr_uuid: string) => {
         try {
-            const sql = GET_QR_BY_UUID_AUTHCODE_SQL;
-            const [rows] = await connection.promise().query(sql, [qr_uuid, authCode]);
-            const data = rows[0] as QR;
-            if (data) {
-                const decryptedIp = await mysqlAESDecrypt(data.qrIp);
-                // const qrName = await mysqlAESDecrypt(data.qrDeviceName);
-                const decryptedLocation = await mysqlAESDecrypt(data.qrLocation);
-                if (decryptedIp) {
-                    data.qrIp = decryptedIp;
-                }
-                // if (decryptedDeviceName) {
-                //     data.qrDeviceName = decryptedDeviceName;
-                // }
-                if (decryptedLocation) {
-                    data.qrLocation = decryptedLocation;
-                }
-            }
-            return data;
+            const sql = UPDATE_ALEADY_USED_QR_SQL;
+            const [result] = await connection.promise().query(sql, qr_uuid);
+            return result;
         } catch (error) {
             throw new Error(error);
         }

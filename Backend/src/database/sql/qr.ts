@@ -31,4 +31,4 @@ export const GET_QR_BY_UUID_SQL = 'SELECT * FROM qr WHERE qr_uuid = ?';
 
 export const GET_QR_BY_UUID_AUTHCODE_SQL = 'SELECT * FROM qr WHERE qr_uuid = ? AND authCode = ?';
 
-// export const UPDATE_ALEADY_USED_NOTIFICATION_SQL = 'UPDATE notifications SET alreadyUsed = TRUE WHERE notification_uuid = ?';
+export const UPDATE_ALEADY_USED_QR_SQL = 'UPDATE qr SET alreadyUsed = TRUE WHERE qr_uuid = ?';

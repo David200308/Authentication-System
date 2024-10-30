@@ -1477,8 +1477,7 @@ export class UserController {
         response.status(HttpStatus.OK).json({
             message: 'QR Code sent',
             qr_uuid,
-            authCode,
-            authCodeHash
+            authCode
         });
     }
 
@@ -1529,103 +1528,113 @@ export class UserController {
             return;
         }
 
-        // const userId = data.user_id;
-        // const user = await this.userService.getUserById(userId);
-        // if (!user) {
-        //     response.status(HttpStatus.NOT_FOUND).json({
-        //         message: 'User not found'
-        //     });
-        //     return;
-        // }
-        // const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
-        // if (data.receiverAction === 'approved') {
-        //     const authuuid = generateUuid();
+        if (data.scannerAction === 'approved') {
+            const userId = data.user_id;
+            const user = await this.userService.getUserById(userId);
+            if (!user) {
+                response.status(HttpStatus.NOT_FOUND).json({
+                    message: 'User not found'
+                });
+                return;
+            }
+            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
 
-        //     const payload = {
-        //         aud: user.id.toString(),
-        //         email: user.email,
-        //         username: user.username,
-        //         authuuid,
-        //         location,
-        //         ipaddress: loginIpAddress,
-        //         device,
-        //     };
+            const authuuid = generateUuid();
+            const payload = {
+                aud: user.id.toString(),
+                email: user.email,
+                username: user.username,
+                authuuid,
+                location,
+                ipaddress: loginIpAddress,
+                device,
+            };
 
-        //     const token = generateToken(payload, false);
+            const token = generateToken(payload, false);
 
-        //     const createAuthRes = await this.userService.createAuthRecord({
-        //         auth_uuid: authuuid,
-        //         user_id: user.id,
-        //         ipAddress: loginIpAddress,
-        //         loginMethod: 'notification',
-        //         loginDeviceName: device,
-        //         loginLocation: location,
-        //         notificationId: data.notification_id.toString()
-        //     });
-        //     if (!createAuthRes) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Create Auth Record failed'
-        //         });
-        //         return;
-        //     }
+            const createAuthRes = await this.userService.createAuthRecord({
+                auth_uuid: authuuid,
+                user_id: user.id,
+                ipAddress: loginIpAddress,
+                loginMethod: 'qr',
+                loginDeviceName: device,
+                loginLocation: location,
+                qrId: data.qr_id.toString()
+            });
+            if (!createAuthRes) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create Auth Record failed'
+                });
+                return;
+            }
 
-        //     const createLogResult = await this.userService.createLog({
-        //         user_id: user.id,
-        //         content: `Login via sent notification in ${location} use ${device}`
-        //     });
-        //     if (!createLogResult) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Create log failed'
-        //         });
-        //         return;
-        //     }
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id,
+                content: `Login via scanned QR code in ${location} use ${device}`
+            });
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
 
-        //     const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
-        //     if (!updateDeviceCount) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Update device count failed'
-        //         });
-        //         return;
-        //     }
+            const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
+            if (!updateDeviceCount) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update device count failed'
+                });
+                return;
+            }
 
-        //     const updateAlreadyUsed = await this.userService.updateAlreadyUsedNotification(notification_uuid);
-        //     if (!updateAlreadyUsed) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Update already used failed'
-        //         });
-        //         return;
-        //     }
+            const updateAlreadyUsed = await this.userService.updateAlreadyUsedQR(qr_uuid);
+            if (!updateAlreadyUsed) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update already used failed'
+                });
+                return;
+            }
 
-        //     response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
-        //     response.status(HttpStatus.OK).json({
-        //         message: 'Login successful',
-        //         status: 'approved'
-        //     });
-        //     return;
-        // } else if (data.receiverAction === 'rejected') {
-        //     const createLogResult = await this.userService.createLog({
-        //         user_id: user.id,
-        //         content: `Rejected Login via sent notification in ${location} use ${device}`
-        //     });
-        //     if (!createLogResult) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Create log failed'
-        //         });
-        //         return;
-        //     }
-        //     const updateAlreadyUsed = await this.userService.updateAlreadyUsedNotification(notification_uuid);
-        //     if (!updateAlreadyUsed) {
-        //         response.status(HttpStatus.BAD_REQUEST).json({
-        //             message: 'Update already used failed'
-        //         });
-        //         return;
-        //     }
+            response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
+            response.status(HttpStatus.OK).json({
+                message: 'Login successful',
+                status: 'approved'
+            });
+            return;
+        } else if (data.scannerAction === 'rejected') {
+            const userId = data.user_id;
+            const user = await this.userService.getUserById(userId);
+            if (!user) {
+                response.status(HttpStatus.NOT_FOUND).json({
+                    message: 'User not found'
+                });
+                return;
+            }
+            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
 
-        //     response.status(HttpStatus.OK).json({
-        //         status: data.receiverAction
-        //     });
-        //     return;
-        // }
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id,
+                content: `Rejected Login via scanned QR code in ${location} use ${device}`
+            });
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+            const updateAlreadyUsed = await this.userService.updateAlreadyUsedQR(qr_uuid);
+            if (!updateAlreadyUsed) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update already used failed'
+                });
+                return;
+            }
+
+            response.status(HttpStatus.OK).json({
+                status: data.scannerAction
+            });
+            return;
+        }
         response.status(HttpStatus.OK).json({
             status: data.scannerAction
         });
@@ -1712,7 +1721,7 @@ export class UserController {
 
                 break;
             case 'rejected':
-                // update notification in database
+                // update qr code in database
                 const resultReject = await this.userService.updateLoginQR('reject', data.qr_uuid, parseInt(payload.aud));
                 if (!resultReject) {
                     response.status(HttpStatus.BAD_REQUEST).json({
