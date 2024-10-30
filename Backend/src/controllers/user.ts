@@ -1133,7 +1133,7 @@ export class UserController {
             rpName: rpName(),
             rpID: rpID(),
             userID: intToUint8Array(user.id),
-            userName: user.username,
+            userName: user.email,
             timeout: 60000,
             attestationType: 'direct',
             excludeCredentials: [],
@@ -1445,7 +1445,6 @@ export class UserController {
             verified: true
         });
     }
-//    async getLogs(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
 
     // qr code login
     @Post('login/qrcode')
