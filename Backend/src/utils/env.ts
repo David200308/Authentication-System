@@ -6,7 +6,6 @@ export const checkEnv = () => {
         'DB_USER',
         'DB_PASS',
         'DB_NAME',
-        'DB_TIMEZONE',
         'JWT_PRIVATE_KEY',
         'JWT_PUBLIC_KEY',
         'DOCS_USER',
@@ -39,11 +38,6 @@ export const checkEnv = () => {
             case 'DB_NAME':
                 if (!process.env.DB_NAME) {
                     throw new Error('Please provide DB_NAME in .env file');
-                }
-                break;
-            case 'DB_TIMEZONE':
-                if (!process.env.DB_TIMEZONE) {
-                    throw new Error('Please provide DB_TIMEZONE in .env file');
                 }
                 break;
             case 'JWT_PRIVATE_KEY':

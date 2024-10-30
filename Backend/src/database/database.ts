@@ -6,7 +6,6 @@ const access: PoolOptions = {
     user: process.env.DB_USER,
     database: process.env.DB_NAME,
     password: process.env.DB_PASS,
-    timezone: process.env.DB_TIMEZONE,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
