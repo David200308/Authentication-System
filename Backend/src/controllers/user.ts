@@ -7,7 +7,8 @@ import {
     CreatePasskeyRequestBodySchema,
     PasswordSignInSchema,
     SignUpSchema,
-    UpdateNotificationLoginBodySchema
+    UpdateNotificationLoginBodySchema,
+    UpdateQRLoginBodySchema
 } from '../schemas/user';
 import {
     generateToken,
@@ -937,7 +938,7 @@ export class UserController {
         }
     }
 
-    @Get('login/notification/status')
+    @Get('login/notification/status') 
     async getLoginNotificationStatus(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
         if (!request.cookies.token) {
             response.status(HttpStatus.UNAUTHORIZED).json({
@@ -1443,6 +1444,308 @@ export class UserController {
             message: 'Login successful',
             verified: true
         });
+    }
+//    async getLogs(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+
+    // qr code login
+    @Post('login/qrcode')
+    async loginWithQRCode(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        const qr_uuid = generateUuid();
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        const authCode = generateRandom6Digits();
+        const authCodeHash = await passwordHash(authCode.toString());
+
+        const result = await this.userService.createLoginQrCode(qr_uuid, device, location, loginIpAddress, authCodeHash);
+        if (!result) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Notification create failed'
+            });
+            return;
+        }
+
+        const payload = {
+            qr_uuid,
+            location,
+            ipaddress: loginIpAddress,
+            device,
+            usage: 'qr code login verification'
+        };
+
+        const token = generateToken(payload, true);
+        response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
+
+        response.status(HttpStatus.OK).json({
+            message: 'QR Code sent',
+            qr_uuid,
+            authCode
+        });
+    }
+
+    @Get('login/qrcode/status') 
+    async getLoginQRCodeStatus(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object") {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+        if (payload.usage !== 'qr code login verification') {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid token usage'
+            });
+            return;
+        }
+
+        const qr_uuid = payload.qr_uuid;
+        const data = await this.userService.getUserQRCodeByQRUUId(qr_uuid);
+        if (!data) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'record not found'
+            });
+            return;
+        };
+        if (data.alreadyUsed) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'Already Used this Login, if auth another device, please request QR Code login again'
+            });
+            return;
+        }
+
+        if (data.scannerAction === 'approved') {
+            const userId = data.user_id;
+            const user = await this.userService.getUserById(userId);
+            if (!user) {
+                response.status(HttpStatus.NOT_FOUND).json({
+                    message: 'User not found'
+                });
+                return;
+            }
+            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+
+            const authuuid = generateUuid();
+            const payload = {
+                aud: user.id.toString(),
+                email: user.email,
+                username: user.username,
+                authuuid,
+                location,
+                ipaddress: loginIpAddress,
+                device,
+            };
+
+            const token = generateToken(payload, false);
+
+            const createAuthRes = await this.userService.createAuthRecord({
+                auth_uuid: authuuid,
+                user_id: user.id,
+                ipAddress: loginIpAddress,
+                loginMethod: 'qr',
+                loginDeviceName: device,
+                loginLocation: location,
+                qrId: data.qr_id.toString()
+            });
+            if (!createAuthRes) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create Auth Record failed'
+                });
+                return;
+            }
+
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id,
+                content: `Login via scanned QR code in ${location} use ${device}`
+            });
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+
+            const updateDeviceCount = await this.userService.updateDeviceCount(user.id, "add");
+            if (!updateDeviceCount) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update device count failed'
+                });
+                return;
+            }
+
+            const updateAlreadyUsed = await this.userService.updateAlreadyUsedQR(qr_uuid);
+            if (!updateAlreadyUsed) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update already used failed'
+                });
+                return;
+            }
+
+            response.cookie('token', token, { secure: true, httpOnly: true, sameSite: 'strict' });
+            response.status(HttpStatus.OK).json({
+                message: 'Login successful',
+                status: 'approved'
+            });
+            return;
+        } else if (data.scannerAction === 'rejected') {
+            const userId = data.user_id;
+            const user = await this.userService.getUserById(userId);
+            if (!user) {
+                response.status(HttpStatus.NOT_FOUND).json({
+                    message: 'User not found'
+                });
+                return;
+            }
+            const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+            if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+                response.status(HttpStatus.UNAUTHORIZED).json({
+                    message: 'Unauthorized'
+                });
+                return;
+            }
+
+            const createLogResult = await this.userService.createLog({
+                user_id: user.id,
+                content: `Rejected Login via scanned QR code in ${location} use ${device}`
+            });
+            if (!createLogResult) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Create log failed'
+                });
+                return;
+            }
+            const updateAlreadyUsed = await this.userService.updateAlreadyUsedQR(qr_uuid);
+            if (!updateAlreadyUsed) {
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Update already used failed'
+                });
+                return;
+            }
+
+            response.status(HttpStatus.OK).json({
+                status: data.scannerAction
+            });
+            return;
+        }
+        response.status(HttpStatus.OK).json({
+            status: data.scannerAction
+        });
+    }
+
+    @Patch('login/qrcode/action')
+    async allowLoginQRCode(@Body() data: UpdateQRLoginBodySchema, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token || !data.action || (data.action !== 'approved' && data.action !== 'rejected')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized or invalid action',
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        if (!data.authCode || data.authCode.length !== 6 || sqliCheck(data.authCode)) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Invalid auth code'
+            });
+            return;
+        }
+
+
+        // compare ipaddress, location, device to detect token hijacking
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        // Find QR code record based on qr_uuid and authCode
+        const qr_data = await this.userService.getUserQRCodeByQRUUId(data.qr_uuid);
+        if (!qr_data) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'the qr code record is not found'
+            });
+            return;
+        };
+        if (qr_data.alreadyUsed) {
+            response.status(HttpStatus.NOT_FOUND).json({
+                message: 'the qr code is no longer valid, please regenerate QR code again'
+            });
+            return;
+        }
+        if (!(await passwordVerify(data.authCode, qr_data.authCode))) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'auth code incorrect'
+            });
+            return;
+        }
+
+        // approved, rejected, pending
+        switch (data.action) {
+            case 'approved':
+                // update qr code in database
+                const result = await this.userService.updateLoginQR('approved', data.qr_uuid, parseInt(payload.aud));
+                if (!result) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Update failed'
+                    });
+                    return;
+                }
+                response.status(HttpStatus.OK).json({
+                    message: 'Login allowed'
+                });
+
+                break;
+            case 'rejected':
+                // update qr code in database
+                const resultReject = await this.userService.updateLoginQR('reject', data.qr_uuid, parseInt(payload.aud));
+                if (!resultReject) {
+                    response.status(HttpStatus.BAD_REQUEST).json({
+                        message: 'Update failed'
+                    });
+                    return;
+                }
+                response.status(HttpStatus.OK).json({
+                    message: 'Login rejected'
+                });
+
+                break;
+            default:
+                response.status(HttpStatus.BAD_REQUEST).json({
+                    message: 'Invalid action'
+                });
+                return;
+        }
     }
 
 }

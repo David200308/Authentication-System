@@ -53,6 +53,20 @@ export type Notification = {
     alreadyUsed: boolean;
 };
 
+export type QR = {
+    qr_id: number;
+    user_id: number;
+    qr_uuid: string;
+    qrDeviceName: string;
+    qrLocation: string;
+    qrAt: Date;
+    qrIp: string;
+    scannerAction: 'approved' | 'rejected';
+    scannerActionAt: Date;
+    authCode: string;
+    alreadyUsed: boolean;
+};
+
 export type Passkey = {
     passkey_id: number;
     user_id: number;
@@ -110,5 +124,11 @@ export type ReturnUserSchema = {
 export type UpdateNotificationLoginBodySchema = {
     action: 'approved' | 'rejected';
     notification_uuid: string;
+    authCode: string;
+}
+
+export type UpdateQRLoginBodySchema = {
+    action: 'approved' | 'rejected';
+    qr_uuid: string;
     authCode: string;
 }
