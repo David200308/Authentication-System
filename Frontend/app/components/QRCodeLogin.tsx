@@ -72,11 +72,13 @@ export default function QRCodeLogin() {
     return (
         <div className="text-black">
             <p>Scan the QR code to login</p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col items-center">
                 {qrCode ? (
                     <>
                         <QRCodeSVG value={qrCode} size={200} />
-                        {checkStatus && <p className="text-center mt-2">Status: {checkStatus}</p>}
+                        {checkStatus && <p className="text-center mt-4">Status: {
+                            checkStatus ? checkQRCodeLoginQuery.data?.status : "Pending"
+                        }</p>}
                     </>
                 ) : (
                     <button

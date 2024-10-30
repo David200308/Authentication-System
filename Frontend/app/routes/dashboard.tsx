@@ -206,6 +206,58 @@ export default function Dashboard() {
         }
     }
 
+    if (qrScanResult && qrScanResult.includes(":")) {
+        const action = confirm(`
+            Do you want to login this device?
+        `);
+        if (action) {
+            fetch("/api/user/login/qrcode/action", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    action: "approved",
+                    notification_uuid: qrScanResult.split(":")[0],
+                    authCode: qrScanResult.split(":")[1],
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Login approved");
+                } else {
+                    alert("Failed to approve login");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while approving the login.");
+            });
+        } else {
+            fetch("/api/user/login/qrcode/action", {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    action: "rejected",
+                    notification_uuid: qrScanResult.split(":")[0],
+                }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert("Login rejected");
+                } else {
+                    alert("Failed to reject login");
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("An error occurred while rejecting the login.");
+            });
+        }
+    }
+
     return (
         <div className="max-w-4xl mx-auto mt-10">
             <h1 className="text-4xl font-bold text-black">Dashboard</h1>
@@ -266,7 +318,7 @@ export default function Dashboard() {
                                 Close
                             </button>
                         )}
-                        {qrScanResult && <p className="text-lg mt-4">Scanned Data: {qrScanResult}</p>}
+                        {/* {qrScanResult && <p className="text-lg mt-4">Scanned Data: {qrScanResult}</p>} */}
                     </div>
                 </div>
             </div>
