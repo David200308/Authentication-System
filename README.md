@@ -5,6 +5,7 @@
 ## Authentication Methods
 
 - Password Authentication
+- Email Verification
 - 2FA (TOTP) (Optional)
 - Token Authentication (JWT Token - ES256 Algorithm)
 - QR Code Authentication
@@ -18,6 +19,7 @@
 - Database: MySQL
 - Container: Docker
 - Deployment: Frontend (Vercel) + Backend (Linux Cloud Server)
+- Email Service: Mailgun (https://www.mailgun.com/)
 
 ## ES256 JWT Signing Key Pair Generate
 
