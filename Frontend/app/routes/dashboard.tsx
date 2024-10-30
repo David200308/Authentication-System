@@ -152,9 +152,7 @@ export default function Dashboard() {
     });
 
     if (checkNotificationLoginQuery.data && checkNotificationLoginQuery.data.notification_uuid) {
-        const action = confirm(`
-            New login notification request from device ${checkNotificationLoginQuery.data.sentNotificationDeviceName} at ${checkNotificationLoginQuery.data.sentNotificationLocation} received. Do you want to proceed?
-        `);
+        const action = confirm(`New login notification request from device ${checkNotificationLoginQuery.data.sentNotificationDeviceName} at ${checkNotificationLoginQuery.data.sentNotificationLocation} received. Do you want to proceed?`);
         if (action) {
             const authCode = prompt("Enter the auth code");
             if (authCode) {
@@ -207,9 +205,7 @@ export default function Dashboard() {
     }
 
     if (qrScanResult && qrScanResult.includes(":")) {
-        const action = confirm(`
-            Do you want to login this device?
-        `);
+        const action = confirm(`Do you want to login this device?`);
         if (action) {
             fetch("/api/user/login/qrcode/action", {
                 method: "PATCH",
@@ -218,7 +214,7 @@ export default function Dashboard() {
                 },
                 body: JSON.stringify({
                     action: "approved",
-                    notification_uuid: qrScanResult.split(":")[0],
+                    qr_uuid: qrScanResult.split(":")[0],
                     authCode: qrScanResult.split(":")[1],
                 }),
             })
@@ -241,7 +237,7 @@ export default function Dashboard() {
                 },
                 body: JSON.stringify({
                     action: "rejected",
-                    notification_uuid: qrScanResult.split(":")[0],
+                    qr_uuid: qrScanResult.split(":")[0],
                 }),
             })
             .then(response => {

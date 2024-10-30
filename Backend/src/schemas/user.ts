@@ -124,11 +124,11 @@ export type ReturnUserSchema = {
 export type UpdateNotificationLoginBodySchema = {
     action: 'approved' | 'rejected';
     notification_uuid: string;
-    authCode: string;
+    authCode?: string;
 }
 
 export type UpdateQRLoginBodySchema = {
     action: 'approved' | 'rejected';
     qr_uuid: string;
-    authCode: string;
+    authCode?: string;
 }
