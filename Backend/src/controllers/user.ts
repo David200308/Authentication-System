@@ -1611,6 +1611,12 @@ export class UserController {
                 return;
             }
             const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+            if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+                response.status(HttpStatus.UNAUTHORIZED).json({
+                    message: 'Unauthorized'
+                });
+                return;
+            }
 
             const createLogResult = await this.userService.createLog({
                 user_id: user.id,
