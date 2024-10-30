@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { useNavigate } from "@remix-run/react";
 
 interface Setup2FADialogProps {
   open: boolean;
@@ -13,6 +14,8 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
   const [otpKey, setOtpKey] = useState<string | null>(null);
   const [startVerify, setStartVerify] = useState<boolean>(false);
   const [code, setCode] = useState<string>("");
+
+  const navigate = useNavigate();
 
   // Enable MFA mutation
   const enableMfaMutation = useMutation<
@@ -80,6 +83,7 @@ export function Setup2FADialog({ open, closeDialog }: Setup2FADialogProps) {
       console.log("MFA verified successfully:", data);
       alert("MFA verified successfully");
       closeDialog();
+      navigate("/dashboard");
     },
     onError: (error) => {
       console.error("Error verifying MFA:", error.message);

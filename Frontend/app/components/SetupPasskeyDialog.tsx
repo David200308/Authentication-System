@@ -1,4 +1,5 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
+import { useNavigate } from '@remix-run/react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { useState } from 'react';
 
@@ -10,6 +11,7 @@ interface SetupPasskeyDialogProps {
 export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProps) {
   const [message, setMessage] = useState<string>('');
   const [isError, setIsError] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const handleSetupPasskey = async () => {
     try {
@@ -50,6 +52,8 @@ export function SetupPasskeyDialog({ open, closeDialog }: SetupPasskeyDialogProp
           throw new Error('Passkey setup failed during verification');
         }
         setMessage('Passkey setup successful');
+        closeDialog();
+        navigate("/dashboard");
       } else {
         throw new Error('Passkey setup failed during verification');
       }

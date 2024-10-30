@@ -120,6 +120,7 @@ export default function Signup() {
               className="px-4 py-2 border rounded w-80 mb-2 bg-white text-black focus:outline-none focus:ring focus:border-blue-300"
               value={formData.password}
               onChange={handleChange}
+              disabled={signupMutation.isPending || needVerifyMessage !== ""}
             />
           </div>
 
