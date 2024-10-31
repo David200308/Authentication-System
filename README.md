@@ -82,3 +82,25 @@ docker-compose up -d
 # Case for Linux Solution souce: https://forums.docker.com/t/nodejs-docker-container-cant-connect-to-mysql-on-host/115221/6
 # Thanks @drakeorfeo & @matthiasradde
 ```
+
+## Build Backend Docker Image & Push to Cloud
+
+```bash
+## Build Docker Image
+docker build -t auth-system .
+
+## Push to DigitalOcean
+## Require: Docker, doctl CLI
+docker tag auth-system registry.digitalocean.com/<ACCOUNT>/auth-system
+docker push registry.digitalocean.com/<ACCOUNT>/auth-system
+
+## Push to Google Cloud
+## Require: Docker, gcloud CLI
+gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://<LOCATION>-docker.pkg.dev
+gcloud artifacts repositories create backend --repository-format=docker \
+    --location=<LOCATION> --description="Backend Docker Image" \
+    --project=<PROJECT_ID>
+docker tag auth-system <LOCATION>-docker.pkg.dev/<PROJECT_ID>/backend/auth-system
+docker push <LOCATION>-docker.pkg.dev/<PROJECT_ID>/backend/auth-system
+
+```
