@@ -834,17 +834,15 @@ export class UserController {
 
         const data = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud));
         if (!data) {
-            response.status(HttpStatus.NOT_FOUND).json({
-                message: 'User not found'
-            });
+            response.status(HttpStatus.OK).json({});
             return;
         }
-
+        
         delete data.authCode;
         delete data.alreadyUsed;
         delete data.sentNotificationIp;
 
-        response.status(HttpStatus.OK).json(data ?? {});
+        response.status(HttpStatus.OK).json(data);
     }
 
     @Patch('login/notification/action')
