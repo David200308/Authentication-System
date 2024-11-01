@@ -251,7 +251,7 @@ export class UserServices {
         }
     };
 
-    getUserLoginNotificationByUserId = async(id: number) => {
+    getUserLoginNotificationByUserId = async(id: number): Promise<Notification> => {
         try {
             const sql = GET_LATEST_NOTIFICATION_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, [id, 'pending']);

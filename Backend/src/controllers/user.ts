@@ -832,13 +832,17 @@ export class UserController {
             return;
         }
 
-        const data = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud)).catch((err) => {
-            console.log(err);
+        const data = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud));
+        if (!data) {
             response.status(HttpStatus.NOT_FOUND).json({
                 message: 'User not found'
             });
             return;
-        });
+        }
+
+        delete data.authCode;
+        delete data.alreadyUsed;
+        delete data.sentNotificationIp;
 
         response.status(HttpStatus.OK).json(data ?? {});
     }
