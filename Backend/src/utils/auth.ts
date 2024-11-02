@@ -3,7 +3,7 @@ import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { connection } from "../database/database";
-import { randomBytes } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import 'dotenv/config';
 
 const SQLI_BLACKLIST = ["'", '"', ";", "--", "/*", "*/", "=", "%", "<", ">", "(", ")", "$", "&", "|", "^", "~", "`", "+", "[", "]", "{", "}", "\\", "/", ":", ",", "?", "_", " ", "\t", "\n", "\r", "\x00", "\x1a"];
@@ -66,7 +66,7 @@ export async function getIpLocation(ipaddress: string) {
 
 export function generateRandom6Digits() {
     const timestamp = Date.now();
-    const randomPart = Math.floor(Math.random() * 1000000);
+    const randomPart = randomInt(0, 1000000);
     const combinedNumber = (timestamp + randomPart) % 1000000;
     const sixDigitNumber = combinedNumber.toString().padStart(6, '0');
     return parseInt(sixDigitNumber, 10);
