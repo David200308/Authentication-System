@@ -8,6 +8,17 @@ import {
 import type { LinksFunction } from "@remix-run/node";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./tailwind.css";
+import { LoaderFunction } from "@remix-run/node";
+import { json, useLoaderData } from "@remix-run/react";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+
+export const loader: LoaderFunction = async () => {
+  return json({
+    ENV: {
+      RECAPTCHA_SITE_KEY: process.env.VITE_RECAPTCHA_SITE_KEY,
+    },
+  });
+};
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -43,11 +54,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { ENV } = useLoaderData<typeof loader>();
+
   return (
     <QueryClientProvider client={queryClient}>
-      {/* <Layout> */}
+      <GoogleReCaptchaProvider
+          reCaptchaKey={ENV.RECAPTCHA_SITE_KEY}
+          scriptProps={{
+            async: false,
+            defer: true,
+            appendTo: "head",
+            nonce: undefined,
+          }}
+        >
         <Outlet />
-      {/* </Layout> */}
+      </GoogleReCaptchaProvider>
     </QueryClientProvider>
   );
 }

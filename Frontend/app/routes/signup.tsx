@@ -1,7 +1,15 @@
 import { Form, useNavigate } from "@remix-run/react";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { getRecaptchaScore } from "~/utils/getRecaptchaScore";
 
+interface InputData {
+  captchaToken: string;
+  username: string;
+  email: string;
+  password: string;
+}
 interface SignupData {
   username: string;
   email: string;
@@ -11,13 +19,23 @@ interface SignupResponse {
   message: string;
 }
 
-async function signupUser(data: SignupData): Promise<SignupResponse> {
+async function signupUser(data: InputData): Promise<SignupResponse> {
+  const recaptchaResult = await getRecaptchaScore(data.captchaToken);
+  if (recaptchaResult) {
+    throw new Error("Verify captcha failed");
+  }
+
+  const bodyData: SignupData = {
+    username: data.username,
+    email: data.email,
+    password: data.password
+  }
   const response = await fetch(`/api/user/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(bodyData),
   });
 
   if (!response.ok) {
@@ -47,14 +65,28 @@ async function verifyToken() {
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const { executeRecaptcha } = useGoogleReCaptcha();
+
+  const handleReCaptchaVerify = useCallback(async () => {
+    if (!executeRecaptcha) {
+      return;
+    }
+
+    const token = await executeRecaptcha();
+    setCaptchaToken(token);
+  }, [executeRecaptcha]);
+
   const [needVerifyMessage, setNeedVerifyMessage] = useState<string>("");
-  const [formData, setFormData] = useState<SignupData>({
+  const [formData, setFormData] = useState<InputData>({
+    captchaToken: "",
     username: "",
     email: "",
     password: "",
   });
 
   useEffect(() => {
+    handleReCaptchaVerify();
     verifyToken().then((data) => {
       if (data.isValid) {
         navigate('/dashboard');
@@ -62,9 +94,9 @@ export default function Signup() {
     }).catch(() => {
       console.log("need to login");
     });
-  }, [navigate]);
+  }, [navigate, handleReCaptchaVerify]);
 
-  const signupMutation = useMutation<SignupResponse, Error, SignupData>({
+  const signupMutation = useMutation<SignupResponse, Error, InputData>({
     mutationFn: signupUser,
     onSuccess: (data: SignupResponse) => {
       console.log("User signed up successfully:", data);
@@ -92,6 +124,7 @@ export default function Signup() {
       <div className="text-center">
         <h1 className="text-4xl font-bold mb-8 text-black">Signup</h1>
         <Form method="post" className="space-y-4" onSubmit={handleSubmit}>
+          {captchaToken ? <input type="hidden" name="_captcha" value={captchaToken}></input> : null}
           <div>
             <input
               type="text"
