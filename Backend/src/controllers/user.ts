@@ -1749,4 +1749,58 @@ export class UserController {
         }
     }
 
+    @Post('/logout')
+    async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
+        if (!request.cookies.token) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const token = request.cookies.token;
+        const payload: JwtPayload | void = await verifyToken(token).catch((err) => {
+            console.log(err);
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized',
+                error: err
+            });
+            return;
+        });
+
+        if (typeof payload !== "object" || !(typeof payload.aud === 'string')) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        const { loginIpAddress, device, location } = await getIPDeviiceNameLocation(request);
+        if (payload.location !== location || payload.ipaddress !== loginIpAddress || payload.device !== device) {
+            response.status(HttpStatus.UNAUTHORIZED).json({
+                message: 'Unauthorized'
+            });
+            return;
+        }
+
+        await this.userService.updateDeviceCount(parseInt(payload.aud), "remove");
+
+        const result = await this.userService.createLog({
+            user_id: parseInt(payload.aud),
+            content: `Logout in ${location} use ${device}`
+        });
+
+        if (!result) {
+            response.status(HttpStatus.BAD_REQUEST).json({
+                message: 'Create log failed'
+            });
+            return;
+        }
+
+        response.clearCookie('token');
+        response.status(HttpStatus.OK).json({
+            message: 'Logout successful'
+        });
+    }
+
 }
