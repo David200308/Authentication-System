@@ -306,18 +306,6 @@ export default function Dashboard() {
                         <SetupPasskeyDialog open={passkeyOpen} closeDialog={() => setPasskeyOpen(false)} />
                     </div>
 
-                    <div className="mt-2">
-                        <button
-                            onClick={() => logout().then(() => {
-                                alert("Logged out successfully");
-                                navigate("/login");
-                            })}
-                            className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
-                        >
-                            Logout
-                        </button>
-                    </div>
-
                     <div>
                         {scannerOpen && (
                             <div className="mt-6">
@@ -343,6 +331,18 @@ export default function Dashboard() {
                             </button>
                         )}
                         {/* {qrScanResult && <p className="text-lg mt-4">Scanned Data: {qrScanResult}</p>} */}
+                    </div>
+
+                    <div className="mt-4">
+                        <button
+                            onClick={() => logout().then(() => {
+                                alert("Logged out successfully");
+                                navigate("/login");
+                            })}
+                            className="mt-4 px-6 py-2 w-[40%] bg-black text-white rounded hover:bg-gray-800"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </div>
             </div>
