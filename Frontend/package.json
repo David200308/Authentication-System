@@ -13,11 +13,11 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.1.5",
-    "@remix-run/node": "^2.13.1",
-    "@remix-run/react": "^2.13.1",
-    "@remix-run/serve": "^2.13.1",
+    "@remix-run/node": "^2.14.0",
+    "@remix-run/react": "^2.14.0",
+    "@remix-run/serve": "^2.14.0",
     "@simplewebauthn/browser": "^11.0.0",
-    "@tanstack/react-query": "^5.59.18",
+    "@tanstack/react-query": "^5.59.20",
     "isbot": "^5.1.17",
     "qr-scanner": "^1.4.2",
     "qrcode.react": "^4.1.0",
@@ -26,11 +26,11 @@
     "react-google-recaptcha-v3": "^1.10.1"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.13.1",
+    "@remix-run/dev": "^2.14.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2",
+    "@typescript-eslint/eslint-plugin": "^8.13.0",
+    "@typescript-eslint/parser": "^8.13.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.14.0",
     "eslint-import-resolver-typescript": "^3.6.3",
@@ -42,7 +42,7 @@
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.1.1"
   },
   "engines": {
     "node": ">=20.0.0"
