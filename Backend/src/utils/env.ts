@@ -15,7 +15,8 @@ export const checkEnv = () => {
         'PASSKEY_ORIGIN',
         'AES_KEY',
         'MAILGUN_API_KEY',
-        'MAILGUN_FROM_DOMAIN'
+        'MAILGUN_FROM_DOMAIN',
+        'SENTRY_DSN'
     ];
     
     for (const varName of requiredEnvVars) {
@@ -90,6 +91,11 @@ export const checkEnv = () => {
                     throw new Error('Please provide MAILGUN_FROM_DOMAIN in .env file');
                 }
                 break;
+            case 'SENTRY_DSN':
+            if (!process.env.SENTRY_DSN) {
+                throw new Error('Please provide SENTRY_DSN in .env file');
+            }
+            break;
             default:
                 continue;
         }

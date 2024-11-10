@@ -6,6 +6,7 @@ import { checkEnv } from './utils/env';
 import * as basicAuth from 'express-basic-auth';
 import 'dotenv/config';
 import { checkDBConnection } from './database/database';
+import "./instrument";
 
 async function bootstrap() {
   checkEnv();
