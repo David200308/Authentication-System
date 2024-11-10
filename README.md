@@ -20,6 +20,7 @@
 - Container: Docker
 - Deployment: Frontend (Vercel) + Backend (Linux Cloud Server)
 - Email Service: Mailgun (https://www.mailgun.com/)
+- Error Tracking: Sentry (https://sentry.io/)
 
 ## ES256 JWT Signing Key Pair Generate
 
