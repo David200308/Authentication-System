@@ -7,12 +7,17 @@ import * as basicAuth from 'express-basic-auth';
 import 'dotenv/config';
 import { checkDBConnection } from './database/database';
 import "./instrument";
+import { accessLogMiddleware } from './utils/accessLogMiddleware';
+
 
 async function bootstrap() {
   checkEnv();
   checkDBConnection();
 
   const app = await NestFactory.create(AppModule);
+
+  app.use(accessLogMiddleware);
+  
   app.use(
     ['/docs'],
     basicAuth({
