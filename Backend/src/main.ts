@@ -25,7 +25,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
   const config = new DocumentBuilder()
-    .setTitle('COMP4334 Final Project Team4: Authorization System Backend API')
+    .setTitle('COMP4334 Final Project Team4: Authentication System Backend API')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
