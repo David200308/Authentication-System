@@ -9,7 +9,6 @@ class Logger {
     private currentLogFile: string;
 
     constructor() {
-        // create the access_logs file
         this.logDir = path.join(process.cwd(), 'access_logs');
         this.ensureLogDirectory();
         this.currentLogFile = this.getLogFileName();
@@ -22,7 +21,6 @@ class Logger {
     }
 
     private getLogFileName(): string {
-        // use the current data as the file name
         const date = format(new Date(), 'yyyy-MM-dd');
         return path.join(this.logDir, `access-${date}.log`);
     }
@@ -43,13 +41,11 @@ class Logger {
         const logLine = JSON.stringify(logEntry) + '\n';
 
         try {
-            //check whether need to create a new file
             const newLogFile = this.getLogFileName();
             if (newLogFile !== this.currentLogFile) {
                 this.currentLogFile = newLogFile;
             }
 
-            // writing to the file
             await fs.promises.appendFile(this.currentLogFile, logLine, 'utf8');
         } catch (error) {
             console.error('Error writing to access log file:', error);
