@@ -4,8 +4,8 @@ import { useEffect } from "react";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "Authorization System" },
-    { name: "description", content: "COMP4334 Final Project Team4: Authorization System" },
+    { title: "Authentication System" },
+    { name: "description", content: "COMP4334 Final Project Team4: Authentication System" },
   ];
 };
 
@@ -43,7 +43,7 @@ export default function Index() {
   return (
     <div className="flex h-screen items-center justify-center bg-gray-100">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-8 text-black">Authorization System</h1>
+        <h1 className="text-4xl font-bold mb-8 text-black">Authentication System</h1>
         <p className="text-gray-700 mb-8">
           COMP4334 Team 4 Final Project
         </p>
