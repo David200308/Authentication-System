@@ -900,8 +900,15 @@ export class UserController {
                 const notificationData = await this.userService.getUserLoginNotificationByUserId(parseInt(payload.aud));
 
                 if (notificationData.notification_uuid !== data.notification_uuid || !(await passwordVerify(data.authCode, notificationData.authCode))) {
+                    const resultReject = await this.userService.updateLoginNotification('rejected', data.notification_uuid, parseInt(payload.aud));
+                    if (!resultReject) {
+                        response.status(HttpStatus.BAD_REQUEST).json({
+                            message: 'Invalid auth code or notification uuid, Update failed'
+                        });
+                        return;
+                    }
                     response.status(HttpStatus.BAD_REQUEST).json({
-                        message: 'Invalid auth code or notification uuid'
+                        message: 'Invalid auth code or notification uuid, rejected!'
                     });
                     return;
                 }
