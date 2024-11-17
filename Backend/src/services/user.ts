@@ -1,25 +1,25 @@
 import { connection } from "../database/database";
-import { SignUpSchema, User, Notification, QR, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema, MFASchema } from "../schemas/user";
-import { Inject, Injectable } from '@nestjs/common';
+import { SignUpSchema, User, Notification, QR, Logs, CreateLogSchema, CreateAuthRecordSchema, CreatePasskeySchema } from "../schemas/user";
+import { Injectable } from '@nestjs/common';
 import { base64ToUint8Array, mysqlAESDecrypt, mysqlAESEncrypt } from "../utils/auth";
-import {
+import { 
     ACTIVATE_USER_SQL,
     ADD_DEVICE_COUNT_SQL,
-    CREATE_USER_SQL,
-    ENABLE_MFA_SQL,
-    ENABLE_PASSKEY_SQL,
+    CREATE_USER_SQL, 
+    ENABLE_MFA_SQL, 
+    ENABLE_PASSKEY_SQL, 
     GET_USER_BY_EMAIL_SQL,
     GET_USER_BY_ID_SQL,
     // GET_USER_BY_NAME_SQL,
     REMOVE_DEVICE_COUNT_SQL
 } from "../database/sql/user";
-import {
-    CREATE_NOTIFICATION_SQL,
-    GET_LATEST_NOTIFICATION_BY_USER_ID_SQL,
-    GET_NOTIFICATION_BY_UUID_SQL,
+import { 
+    CREATE_NOTIFICATION_SQL, 
+    GET_LATEST_NOTIFICATION_BY_USER_ID_SQL, 
+    GET_NOTIFICATION_BY_UUID_SQL, 
     // GET_NOTIFICATIONS_BY_USER_ID_SQL, 
-    UPDATE_ALEADY_USED_NOTIFICATION_SQL,
-    UPDATE_NOTIFICATION_SQL
+    UPDATE_ALEADY_USED_NOTIFICATION_SQL, 
+    UPDATE_NOTIFICATION_SQL 
 } from "../database/sql/notification";
 import {
     CREATE_QR_SQL,
@@ -27,31 +27,27 @@ import {
     UPDATE_ALEADY_USED_QR_SQL,
     UPDATE_QR_SQL
 } from "../database/sql/qr";
-import {
-    CREATE_PASSKEY_SQL,
-    GET_PASSKEY_BY_PASSKEY_UID_SQL,
-    UPDATE_PASSKEY_COUNT_SQL
+import { 
+    CREATE_PASSKEY_SQL, 
+    GET_PASSKEY_BY_PASSKEY_UID_SQL, 
+    UPDATE_PASSKEY_COUNT_SQL 
 } from "../database/sql/passkey";
-import {
-    CREATE_LOG_SQL,
-    GET_LOGS_BY_USERID
+import { 
+    CREATE_LOG_SQL, 
+    GET_LOGS_BY_USERID 
 } from "../database/sql/logs";
-import {
+import { 
     CREATE_AUTH_SQL
 } from "../database/sql/auth";
-import {
-    CREATE_MFA_SQL,
-    GET_MFA_BY_USER_ID_NOT_VERIFY_SQL,
-    GET_MFA_BY_USER_ID_SQL,
+import { 
+    CREATE_MFA_SQL, 
+    GET_MFA_BY_USER_ID_NOT_VERIFY_SQL, 
+    GET_MFA_BY_USER_ID_SQL, 
     UPDATE_MFA_INITIAL_SETUP_SQL
 } from "../database/sql/mfa";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UserServices {
-    constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) { }
-
     createUser = async (data: SignUpSchema) => {
         const searchUser = await this.getUserByEmail(data.email);
         if (searchUser) {
@@ -210,7 +206,7 @@ export class UserServices {
         return result;
     };
 
-    getUserQRCodeByQRUUId = async (qr_uuid: string): Promise<QR> => {
+    getUserQRCodeByQRUUId = async(qr_uuid: string): Promise<QR> => {
         try {
             const sql = GET_QR_BY_UUID_SQL;
             const [rows] = await connection.promise().query(sql, qr_uuid);
@@ -235,7 +231,7 @@ export class UserServices {
         }
     };
 
-    updateAlreadyUsedQR = async (qr_uuid: string) => {
+    updateAlreadyUsedQR = async(qr_uuid: string) => {
         try {
             const sql = UPDATE_ALEADY_USED_QR_SQL;
             const [result] = await connection.promise().query(sql, qr_uuid);
@@ -245,7 +241,7 @@ export class UserServices {
         }
     };
 
-    updateLoginQR = async (scannerAction: string, qr_uuid: string, user_id: number) => {
+    updateLoginQR = async(scannerAction: string, qr_uuid: string, user_id: number) => {
         try {
             const sql = UPDATE_QR_SQL;
             const [result] = await connection.promise().query(sql, [user_id, scannerAction, new Date(), qr_uuid]);
@@ -255,7 +251,7 @@ export class UserServices {
         }
     };
 
-    getUserLoginNotificationByUserId = async (id: number): Promise<Notification> => {
+    getUserLoginNotificationByUserId = async(id: number): Promise<Notification> => {
         try {
             const sql = GET_LATEST_NOTIFICATION_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, [id, 'pending']);
@@ -291,7 +287,7 @@ export class UserServices {
     //     }
     // };
 
-    updateLoginNotification = async (receiverAction: string, notification_uuid: string, user_id: number) => {
+    updateLoginNotification = async(receiverAction: string, notification_uuid: string, user_id: number) => {
         try {
             const sql = UPDATE_NOTIFICATION_SQL;
             const [result] = await connection.promise().query(sql, [receiverAction, new Date(), notification_uuid, user_id]);
@@ -301,7 +297,7 @@ export class UserServices {
         }
     };
 
-    getUserNotificationByNotificationUUId = async (notification_uuid: string): Promise<Notification> => {
+    getUserNotificationByNotificationUUId = async(notification_uuid: string): Promise<Notification> => {
         try {
             const sql = GET_NOTIFICATION_BY_UUID_SQL;
             const [rows] = await connection.promise().query(sql, notification_uuid);
@@ -326,7 +322,7 @@ export class UserServices {
         }
     };
 
-    updateAlreadyUsedNotification = async (notification_uuid: string) => {
+    updateAlreadyUsedNotification = async(notification_uuid: string) => {
         try {
             const sql = UPDATE_ALEADY_USED_NOTIFICATION_SQL;
             const [result] = await connection.promise().query(sql, notification_uuid);
@@ -342,7 +338,7 @@ export class UserServices {
         return result;
     };
 
-    getPasskeyByPasskeyUid = async (passkeyUid: string) => {
+    getPasskeyByPasskeyUid = async (passkeyUid : string) => {
         try {
             const sql = GET_PASSKEY_BY_PASSKEY_UID_SQL;
             const [rows] = await connection.promise().query(sql, passkeyUid);
@@ -427,22 +423,10 @@ export class UserServices {
 
     getMFAByUserId = async (userId: number) => {
         try {
-            const cacheDataStr = await this.cacheManager.get<string>(`user:mfa:${userId}`);
-            if (cacheDataStr) {
-                const cacheData = JSON.parse(cacheDataStr);
-                const decryptedMFAKey = await mysqlAESDecrypt(cacheData.mfa_key);
-                if (decryptedMFAKey) {
-                    cacheData.mfa_key = decryptedMFAKey;
-                }
-                return cacheData;
-            }
-
             const sql = GET_MFA_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, userId);
-            const data: MFASchema = rows[0];
-
+            const data = rows[0];
             if (data) {
-                await this.cacheManager.set(`user:mfa:${userId}`, JSON.stringify(data));
                 const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
                 if (decryptedMFAKey) {
                     data.mfa_key = decryptedMFAKey;
@@ -450,10 +434,9 @@ export class UserServices {
             }
             return data;
         } catch (error) {
-            console.error('Error fetching MFA data:', error);
             return null;
         }
-    };
+    }
 
     createLog = async (data: CreateLogSchema) => {
         // const encryptedData = await mysqlAESEncrypt(data.content);

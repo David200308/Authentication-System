@@ -132,11 +132,3 @@ export type UpdateQRLoginBodySchema = {
     qr_uuid: string;
     authCode?: string;
 }
-
-export type MFASchema = {
-    mfa_id: number;
-    user_id: number;
-    mfa_key: string;
-    enableAt: Date;
-    initialSetup: boolean;
-}
