@@ -426,8 +426,11 @@ export class UserServices {
     }
 
     getMFAByUserId = async (userId: number) => {
+        const cacheDataStr = await this.cacheManager.get<string>(`user:mfa:${userId}`).catch((error) => {
+            error;
+        });
+
         try {
-            const cacheDataStr = await this.cacheManager.get<string>(`user:mfa:${userId}`);
             if (cacheDataStr) {
                 const cacheData = JSON.parse(cacheDataStr);
                 const decryptedMFAKey = await mysqlAESDecrypt(cacheData.mfa_key);
