@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { UserController } from './controllers/user';
 import { UserServices } from './services/user';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SentryModule } from '@sentry/nestjs/setup';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -10,8 +12,16 @@ import { SentryModule } from '@sentry/nestjs/setup';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
-    })],
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      url: process.env.REDIS_URL,
+    }),
+  ],
   controllers: [UserController],
-  providers: [UserServices],
+  providers: [
+    UserServices,
+  ],
 })
-export class AppModule { }
+export class AppModule {}

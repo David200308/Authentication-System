@@ -5,8 +5,17 @@ services:
     ports:
       - "3001:3001"
     env_file: ".env"
-    
-    # If OS is Liunx & the Database own hosted, add this
-    # extra_hosts:
-    #   - "host.docker.internal:172.17.0.1"
-    
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:latest"
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+
+volumes: 
+  redis:
+    driver: local
