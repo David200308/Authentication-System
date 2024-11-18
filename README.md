@@ -68,7 +68,6 @@ source ./database.sql
 npm run start
 
 ## Also, can running on docker
-export REDIS_PASSWORD=<YOUR_REDIS_PASSWORD>
 docker-compose up -d
 
 # .env file: if use docker container for Backend API & the Database host at local -> use "host.docker.internal"
