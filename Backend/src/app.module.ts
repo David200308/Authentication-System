@@ -3,9 +3,8 @@ import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { UserController } from './controllers/user';
 import { UserServices } from './services/user';
 import { ConfigModule } from '@nestjs/config';
-import { RedisOptions } from './redis.config.options';
 import { SentryModule } from '@sentry/nestjs/setup';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -14,15 +13,19 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    CacheModule.registerAsync(RedisOptions),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore as any,
+      url: process.env.REDIS_URL,
+    }),
   ],
   controllers: [UserController],
   providers: [
     UserServices,
     {
-      provide: APP_INTERCEPTOR,
+      provide: CacheInterceptor,
       useClass: CacheInterceptor,
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
