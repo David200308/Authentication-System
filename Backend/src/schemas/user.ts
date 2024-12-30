@@ -1,4 +1,4 @@
-import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
+import { RegistrationResponseJSON } from '@simplewebauthn/server';
 
 export type User = {
     id: number;

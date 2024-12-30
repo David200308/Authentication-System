@@ -26,7 +26,7 @@ import {
     uint8ArrayToBase64,
     sqliCheck
 } from '../utils/auth';
-import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
+import { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import * as speakeasy from 'speakeasy';
 import { sendActivationEmail } from '../utils/email';
 
