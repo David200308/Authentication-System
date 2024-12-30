@@ -27,5 +27,5 @@ jobs:
           context: ./Backend
           push: true
           tags: |
-            ghcr.io/David200308/Authentication-System/Backend:latest
-            ghcr.io/David200308/Authentication-System/Backend:${{ github.sha }}
+            ghcr.io/david200308/authentication-system/backend:latest
+            ghcr.io/david200308/authentication-system/backend:${{ github.sha }}
