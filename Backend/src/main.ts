@@ -23,7 +23,7 @@ async function bootstrap() {
     basicAuth({
       challenge: true,
       users: { 
-        [process.env.DOCS_USER]: process.env.DOCS_PASSWORD
+        [process.env.DOCS_USER_FILE]: process.env.DOCS_PASSWORD_FILE
       },
     }),
   );

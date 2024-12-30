@@ -51,6 +51,8 @@ services:
       MYSQL_DATABASE: AUTHDB
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
     secrets:
       - mysql_root_password
     healthcheck:

@@ -27,7 +27,7 @@ export const passwordVerify = async (password: string, hashedPassword: string) =
 
 export const generateToken = (payload: JwtPayload, expireFast: boolean) => {
     // use ES256 algorithm to sign payload
-    const privateKey = process.env.JWT_PRIVATE_KEY.replace(/\\n/g, '\n');
+    const privateKey = process.env.JWT_PRIVATE_KEY_FILE.replace(/\\n/g, '\n');
     const token = sign(payload, privateKey, {
         algorithm: "ES256",
         // expireFast true 5 minuties, false 1 hour
@@ -38,7 +38,7 @@ export const generateToken = (payload: JwtPayload, expireFast: boolean) => {
 };
 
 export const verifyToken = async (token: string) => {
-    const publicKey = process.env.JWT_PUBLIC_KEY.replace(/\\n/g, '\n');
+    const publicKey = process.env.JWT_PUBLIC_KEY_FILE.replace(/\\n/g, '\n');
     const payload = verify(token, publicKey, {
         algorithms: ["ES256"]
     });
@@ -86,9 +86,9 @@ export async function getIPDeviiceNameLocation(request: Request) {
     return { loginIpAddress, device, location };
 }
 
-export const rpName = (): string => { return process.env.PASSKEY_RPNAME; };
-export const rpID = (): string => { return process.env.PASSKEY_RPID; };
-export const origin = (): string => { return process.env.PASSKEY_ORIGIN; };
+export const rpName = (): string => { return process.env.PASSKEY_RPNAME_FILE; };
+export const rpID = (): string => { return process.env.PASSKEY_RPID_FILE; };
+export const origin = (): string => { return process.env.PASSKEY_ORIGIN_FILE; };
 
 export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string =>
     Buffer.from(uint8Array).toString('base64');
@@ -106,7 +106,7 @@ export const uint8ArrayToInt = (uint8Array: Uint8Array): number =>
     new DataView(uint8Array.buffer).getUint32(0);
 
 export async function mysqlAESEncrypt(data: string): Promise<string | null> {
-    const key = process.env.AES_KEY;
+    const key = process.env.AES_KEY_FILE;
     const iv = randomBytes(16).toString('hex');
 
     await connection.promise().query("SET block_encryption_mode = 'aes-256-cbc'");
@@ -119,7 +119,7 @@ export async function mysqlAESEncrypt(data: string): Promise<string | null> {
 }
 
 export async function mysqlAESDecrypt(encryptedData: string): Promise<string | null> {
-    const key = process.env.AES_KEY;
+    const key = process.env.AES_KEY_FILE;
     const [data, iv] = encryptedData.split(':');
 
     await connection.promise().query("SET block_encryption_mode = 'aes-256-cbc'");

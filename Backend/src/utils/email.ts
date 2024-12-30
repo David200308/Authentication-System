@@ -1,7 +1,7 @@
 import { activationEmail } from './emailTemplates';
 import 'dotenv/config';
 
-const domain = process.env.MAILGUN_FROM_DOMAIN;
+const domain = process.env.MAILGUN_FROM_DOMAIN_FILE;
 
 export function validateEmail(email: string) {
     const re = /\S+@\S+\.\S+/;
@@ -12,7 +12,7 @@ export const sendActivationEmail = async (to: string, token: string) => {
     const apiEndpoint = `https://api.mailgun.net/v3/${domain}/messages`;
 
     const reqHeaders = new Headers();
-    reqHeaders.append('Authorization', `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY}`).toString('base64')}`);
+    reqHeaders.append('Authorization', `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY_FILE}`).toString('base64')}`);
 
     const formdata = new FormData();
     formdata.append("from", `Auth System <postmaster@${domain}>`);
