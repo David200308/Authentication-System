@@ -427,22 +427,11 @@ export class UserServices {
 
     getMFAByUserId = async (userId: number) => {
         try {
-            const cacheDataStr = await this.cacheManager.get<string>(`user:mfa:${userId}`);
-            if (cacheDataStr) {
-                const cacheData = JSON.parse(cacheDataStr);
-                const decryptedMFAKey = await mysqlAESDecrypt(cacheData.mfa_key);
-                if (decryptedMFAKey) {
-                    cacheData.mfa_key = decryptedMFAKey;
-                }
-                return cacheData;
-            }
-
             const sql = GET_MFA_BY_USER_ID_SQL;
             const [rows] = await connection.promise().query(sql, userId);
             const data: MFASchema = rows[0];
-
+    
             if (data) {
-                await this.cacheManager.set(`user:mfa:${userId}`, JSON.stringify(data));
                 const decryptedMFAKey = await mysqlAESDecrypt(data.mfa_key);
                 if (decryptedMFAKey) {
                     data.mfa_key = decryptedMFAKey;
