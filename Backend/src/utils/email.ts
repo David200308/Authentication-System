@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { activationEmail } from './emailTemplates';
 import 'dotenv/config';
 
@@ -12,7 +13,8 @@ export const sendActivationEmail = async (to: string, token: string) => {
     const apiEndpoint = `https://api.mailgun.net/v3/${domain}/messages`;
 
     const reqHeaders = new Headers();
-    reqHeaders.append('Authorization', `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY_FILE}`).toString('base64')}`);
+    // reqHeaders.append('Authorization', `Basic ${Buffer.from(`api:${process.env.MAILGUN_API_KEY_FILE}`).toString('base64')}`);
+    reqHeaders.append('Authorization', `Basic ${Buffer.from(`api:${readFileSync(process.env.MAILGUN_API_KEY_FILE, 'utf8').trim()}`).toString('base64')}`);
 
     const formdata = new FormData();
     formdata.append("from", `Auth System <postmaster@${domain}>`);

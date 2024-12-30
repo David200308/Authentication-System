@@ -2,9 +2,11 @@
 import * as Sentry from "@sentry/nestjs"
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import 'dotenv/config';
+import { readFileSync } from "fs";
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN_FILE,
+  // dsn: process.env.SENTRY_DSN,
+  dsn: readFileSync(process.env.SENTRY_DSN_FILE, 'utf8').trim(),
   integrations: [
     nodeProfilingIntegration(),
   ],

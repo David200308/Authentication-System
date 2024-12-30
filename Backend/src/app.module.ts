@@ -11,7 +11,7 @@ import * as redisStore from 'cache-manager-redis-store';
     SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      // envFilePath: '.env',
     }),
     CacheModule.register({
       isGlobal: true,

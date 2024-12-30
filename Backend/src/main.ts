@@ -8,6 +8,7 @@ import 'dotenv/config';
 import { checkDBConnection } from './database/database';
 import "./instrument";
 import { accessLogMiddleware } from './utils/accessLogMiddleware';
+import { readFileSync } from 'fs';
 
 
 async function bootstrap() {
@@ -15,6 +16,10 @@ async function bootstrap() {
   checkDBConnection();
 
   const app = await NestFactory.create(AppModule);
+  const [docsUser, docsPass] = [
+    readFileSync(process.env.DOCS_USER_FILE, 'utf8').trim(), 
+    readFileSync(process.env.DOCS_PASSWORD_FILE, 'utf8').trim()
+  ];
 
   app.use(accessLogMiddleware);
   
@@ -23,7 +28,8 @@ async function bootstrap() {
     basicAuth({
       challenge: true,
       users: { 
-        [process.env.DOCS_USER_FILE]: process.env.DOCS_PASSWORD_FILE
+        // [process.env.DOCS_USER]: process.env.DOCS_PASSWORD
+        [docsUser]: docsPass
       },
     }),
   );
