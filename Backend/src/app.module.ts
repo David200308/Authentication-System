@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { CacheModule } from '@nestjs/cache-manager';
+import { CacheModule, CacheStore } from '@nestjs/cache-manager';
 import { UserController } from './controllers/user';
 import { UserServices } from './services/user';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -15,7 +15,7 @@ import * as redisStore from 'cache-manager-redis-store';
     }),
     CacheModule.register({
       isGlobal: true,
-      store: redisStore,
+      store: redisStore as unknown as CacheStore,
       url: process.env.REDIS_URL,
     }),
   ],
