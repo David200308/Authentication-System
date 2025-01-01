@@ -80,7 +80,7 @@ export function generateRandom6Digits() {
 }
 
 export async function getIPDeviiceNameLocation(request: Request) {
-    let loginIpAddress = request.headers['x-forwarded-for'];
+    let loginIpAddress = request.headers['x-client-request-ip'];
     if (Array.isArray(loginIpAddress)) {
         loginIpAddress = loginIpAddress[0];
     }
