@@ -1,0 +1,29 @@
+version: "3"
+services:
+  reverse-proxy:
+    image: traefik:v3.1
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=admin@skyproton.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - letsencrypt:/letsencrypt
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - proxy-network
+
+volumes:
+  letsencrypt:
+
+networks:
+  proxy-network:
+    external: true

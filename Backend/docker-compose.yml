@@ -1,29 +1,8 @@
 version: "3"
 services:
-  reverse-proxy:
-    image: traefik:v3.1
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=admin@skyproton.com"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - letsencrypt:/letsencrypt
-      - "/var/run/docker.sock:/var/run/docker.sock"
-
   backend:
-    build: .
-    # image: backend
+    # build: .
+    image: ghcr.io/david200308/authentication-system/backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(\"auth.api.skyproton.com\")"
@@ -61,7 +40,11 @@ services:
       - mailgun_api_key
       - mailgun_from_domain
       - sentry_dsn
+    networks:
+      - proxy-network
     deploy:
+      # mode: replicated
+      # replicas: 3
       update_config:
         order: start-first
     depends_on:
@@ -95,6 +78,11 @@ services:
       - 6379:6379
     volumes:
       - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes: 
   letsencrypt:
@@ -128,4 +116,8 @@ secrets:
   mailgun_from_domain:
     external: true
   sentry_dsn:
+    external: true
+
+networks:
+  proxy-network:
     external: true
