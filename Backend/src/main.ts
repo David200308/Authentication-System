@@ -52,6 +52,6 @@ async function bootstrap() {
     origin: process.env.PASSKEY_ORIGIN,
   });
 
-  await app.listen(3001);
+  await app.listen(3000);
 }
 bootstrap();

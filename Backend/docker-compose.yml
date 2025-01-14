@@ -60,7 +60,7 @@ services:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: AUTHDB
     volumes:
-      - mysql_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
       - ./database.sql:/docker-entrypoint-initdb.d/database.sql
     secrets:
@@ -87,7 +87,7 @@ services:
 volumes: 
   letsencrypt:
     driver: local
-  mysql_data:
+  db_data:
     driver: local
   redis:
     driver: local
