@@ -1,5 +1,26 @@
 version: "3"
 services:
+  reverse-proxy:
+    image: traefik:v3.1
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=admin@skyproton.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - letsencrypt:/letsencrypt
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
   backend:
     # build: .
     image: ghcr.io/david200308/authentication-system/backend
@@ -8,8 +29,6 @@ services:
       - "traefik.http.routers.backend.rule=Host(\"auth.api.skyproton.com\")"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
-    # ports:
-    #   - "3001:3001"
     environment:
       - DB_HOST=mysql
       - DB_USER=root
@@ -40,8 +59,6 @@ services:
       - mailgun_api_key
       - mailgun_from_domain
       - sentry_dsn
-    networks:
-      - proxy-network
     deploy:
       # mode: replicated
       # replicas: 3
@@ -60,7 +77,7 @@ services:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: AUTHDB
     volumes:
-      - db_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
       - ./database.sql:/docker-entrypoint-initdb.d/database.sql
     secrets:
@@ -87,7 +104,7 @@ services:
 volumes: 
   letsencrypt:
     driver: local
-  db_data:
+  mysql_data:
     driver: local
   redis:
     driver: local
@@ -116,8 +133,4 @@ secrets:
   mailgun_from_domain:
     external: true
   sentry_dsn:
-    external: true
-
-networks:
-  proxy-network:
     external: true
