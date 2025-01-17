@@ -67,32 +67,37 @@ services:
     depends_on:
       - mysql
       - redis
+    entrypoint: >
+      sh -c "
+      until nc -z mysql 3306 && nc -z redis 6379; do
+        echo 'Waiting for database and redis...';
+        sleep 5;
+      done;
+      echo 'Starting backend...';
+      exec npm start;
+      "
 
   mysql:
     image: "mysql:latest"
-    restart: always
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: AUTHDB
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
-      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
     secrets:
       - mysql_root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "-uroot", "-p$MYSQL_ROOT_PASSWORD", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   redis:
     image: "redis:latest"
-    restart: always
     ports:
-      - 6379:6379
+      - "6379:6379"
     volumes:
       - redis:/data
     healthcheck:
@@ -101,7 +106,7 @@ services:
       timeout: 10s
       retries: 5
 
-volumes: 
+volumes:
   letsencrypt:
     driver: local
   mysql_data:
