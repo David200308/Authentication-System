@@ -1,17 +1,18 @@
-FROM node:22-alpine
+FROM --platform=linux/amd64 docker.io/node:22-alpine
 
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
-
-WORKDIR /home/node/app
+WORKDIR /app
+RUN mkdir -p /app/node_modules && chown -R node:node /app
 
 COPY package*.json ./
-
-USER root
-
 RUN npm install
 
-COPY --chown=node:node . .
+COPY . .
+RUN npm run build
 
-EXPOSE 3000
+WORKDIR /app/dist
 
-CMD [ "npm", "run", "start" ]
+EXPOSE 3001
+
+USER node
+
+CMD [ "node", "main.js" ]
