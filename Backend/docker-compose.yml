@@ -40,10 +40,10 @@ services:
       - redis
     networks:
       - internal
-      - external
+      - public
     entrypoint: >
       sh -c "
-      until mysqladmin ping -h mysql --silent && redis-cli -h redis ping | grep -q PONG; do
+      until nc -z mysql 3306 && nc -z redis 6379; do
         echo 'Waiting for database and redis...';
         sleep 5;
       done;
@@ -89,8 +89,9 @@ volumes:
 networks:
   internal:
     driver: overlay
-  external:
-    driver: bridge
+  public:
+    driver: overlay
+    attachable: true
 
 secrets:
   mysql_root_password:
