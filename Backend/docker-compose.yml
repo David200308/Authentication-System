@@ -1,34 +1,10 @@
-version: "3"
-services:
-  reverse-proxy:
-    image: traefik:v3.1
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=admin@skyproton.com"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - letsencrypt:/letsencrypt
-      - "/var/run/docker.sock:/var/run/docker.sock"
+version: "3.8"
 
+services:
   backend:
-    # build: .
     image: ghcr.io/david200308/authentication-system/backend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(\"auth.api.skyproton.com\")"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+    ports:
+      - "3000:3000"
     environment:
       - DB_HOST=mysql
       - DB_USER=root
@@ -59,17 +35,15 @@ services:
       - mailgun_api_key
       - mailgun_from_domain
       - sentry_dsn
-    deploy:
-      # mode: replicated
-      # replicas: 3
-      update_config:
-        order: start-first
     depends_on:
       - mysql
       - redis
+    networks:
+      - internal
+      - external
     entrypoint: >
       sh -c "
-      until nc -z mysql 3306 && nc -z redis 6379; do
+      until mysqladmin ping -h mysql --silent && redis-cli -h redis ping | grep -q PONG; do
         echo 'Waiting for database and redis...';
         sleep 5;
       done;
@@ -79,8 +53,6 @@ services:
 
   mysql:
     image: "mysql:latest"
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       MYSQL_DATABASE: AUTHDB
@@ -89,15 +61,15 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "-uroot", "-p$MYSQL_ROOT_PASSWORD", "ping"]
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p`cat /run/secrets/mysql_root_password`"]
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - internal
 
   redis:
     image: "redis:latest"
-    ports:
-      - "6379:6379"
     volumes:
       - redis:/data
     healthcheck:
@@ -105,14 +77,20 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    networks:
+      - internal
 
 volumes:
-  letsencrypt:
-    driver: local
   mysql_data:
     driver: local
   redis:
     driver: local
+
+networks:
+  internal:
+    driver: overlay
+  external:
+    driver: bridge
 
 secrets:
   mysql_root_password:

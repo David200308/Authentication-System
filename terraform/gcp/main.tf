@@ -17,7 +17,7 @@ resource "google_cloud_run_v2_service" "backend_cloud_run" {
     containers {
       image = "${var.gcp_region}-docker.pkg.dev/${var.gcp_project_id}/backend/auth-system"
       ports {
-        container_port = 3001
+        container_port = 3000
       }
       env {
         name = "DB_HOST"
